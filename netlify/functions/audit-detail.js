@@ -1,3 +1,4 @@
+// v2 deploy 1778010095
 const impl = require('./audit-detail_impl');
 const ALLOWED_ORIGINS = [
   ...(process.env.ALLOWED_ORIGINS||'').split(',').map(s=>s.trim()),
