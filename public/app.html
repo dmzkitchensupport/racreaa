@@ -1698,7 +1698,7 @@ function buildSalonCriterios() {
         ${c.subs.map(s=>`
           <div class="crit-block" data-sub="${s.k}">
             <div class="crit-name"><span>${s.l}</span><span id="smss-${c.id}-${s.k}" style="font-family:'Morl',sans-serif;font-weight:700;font-size:15px;color:var(--text3)">—</span></div>
-            <div class="stars-row">${[1,2,3,4,5].map(i=>`<span class="star-touch" onclick="setSalonStarM('${c.id}','${s.k}',${i})">★</span>`).join('')}</div>
+            <div class="seg-rating">${[1,2,3,4,5].map(i=>`<div class="seg-btn-r v${i}" onclick="setSalonStarM('${c.id}','${s.k}',${i})">${i}</div>`).join('')}</div>
           </div>`).join('')}
         <div class="pc-score-row">
           <span class="pc-score-label">Score criterio</span>
@@ -1724,7 +1724,7 @@ function setSalonStarM(cid, sub, val) {
   salonScoresM[cid][sub] = val;
   const card = document.getElementById(`sm-${cid}`);
   const block = card.querySelector(`.crit-block[data-sub="${sub}"]`);
-  if(block) block.querySelectorAll('.star-touch').forEach((s,i)=>s.classList.toggle('on',i<val));
+  if(block) block.querySelectorAll('.seg-btn-r').forEach((s,i)=>s.classList.toggle('sel',i+1===val));
   const ss = document.getElementById(`smss-${cid}-${sub}`); if(ss) ss.textContent=val;
   calcSalonCritM(cid);
 }
