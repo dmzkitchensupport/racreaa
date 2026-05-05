@@ -919,14 +919,14 @@ body{background:var(--bg);font-family:'Morl',sans-serif;color:var(--text);displa
 
 /* ══ MODAL REPORTE AUDITORÍA ══ */
 .report-overlay {
-  position:fixed;inset:0;background:rgba(0,0,0,.75);
-  z-index:900;display:none;align-items:flex-start;
+  position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.88);
+  z-index:99999;display:none;align-items:flex-start;
   justify-content:center;padding:20px;overflow-y:auto;
 }
 .report-overlay.open { display:flex !important; }
 .report-modal {
   background:#1A1917;border:1px solid rgba(196,146,42,.2);
-  border-radius:4px;width:100%;max-width:740px;margin:auto;position:relative;
+  border-radius:4px;width:100%;max-width:740px;margin:20px auto;position:relative;z-index:100000;
 }
 .report-header {
   background:#111010;padding:18px 24px;
@@ -2692,7 +2692,11 @@ let pendingUploadPhotos = [];
 async function openReport(auditId) {
   currentReportId = auditId;
   pendingUploadPhotos = [];
-  document.getElementById('report-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  const overlay = document.getElementById('report-overlay');
+  // Mover overlay al final del body para evitar clipping del sidebar
+  document.body.appendChild(overlay);
+  overlay.classList.add('open');
   document.getElementById('report-body').innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3)">Cargando reporte...</div>';
 
   try {
@@ -2709,7 +2713,9 @@ async function openReport(auditId) {
 }
 
 function closeReport() {
-  document.getElementById('report-overlay').classList.remove('open');
+  const overlay = document.getElementById('report-overlay');
+  if (overlay) overlay.classList.remove('open');
+  document.body.style.overflow = '';
   currentReportId = null;
   pendingUploadPhotos = [];
 }
