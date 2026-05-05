@@ -2502,6 +2502,100 @@ function trackView(name) {
 }
 
 
+
+/* ══ EXPORTAR REPORTE A PDF ══ */
+function printReport(audit) {
+  if (!audit) return;
+  const color = getNivelColor(audit.global_score||0);
+  const nivel = getNivel(audit.global_score||0);
+  const fecha = new Date().toLocaleDateString('es-MX',{year:'numeric',month:'long',day:'numeric'});
+
+  const metaRows = [
+    ['ID de Auditoría', audit.id],
+    ['Establecimiento', audit.establecimiento||'—'],
+    ['Auditor', audit.auditor_name||audit.operator_full_name||'—'],
+    ['Fecha', audit.audit_date||'—'],
+    ['Servicio', audit.service_period||'—'],
+    ['Tipo', (audit.audit_type||'alimentos').toUpperCase()],
+    audit.mesero ? ['Mesero', audit.mesero] : null,
+    ['Total fotos', `${audit.total_fotos||0} foto(s)`],
+    ['Timestamp servidor', new Date(audit.server_timestamp).toLocaleString('es-MX')],
+    audit.gps_lat ? ['GPS Envío', `${parseFloat(audit.gps_lat).toFixed(5)}, ${parseFloat(audit.gps_lng).toFixed(5)}`] : null,
+  ].filter(Boolean);
+
+  const itemsHTML = (audit.items||[]).map(item => {
+    const ic = getNivelColor(item.score||0);
+    const crits = [
+      ['Presentación', item.crit_presentacion],
+      ['Temperatura',  item.crit_temperatura],
+      ['Sabor',        item.crit_sabor],
+      ['Textura',      item.crit_textura],
+      ['Porción',      item.crit_porcion],
+    ].filter(([,v]) => v != null)
+     .map(([l,v]) => `<span class="print-crit">${l}: ${'★'.repeat(v||0)}${'☆'.repeat(5-(v||0))}</span>`)
+     .join('');
+
+    const timer = item.timer_seconds
+      ? `<div style="font-size:10px;color:#9A9890;margin-bottom:4px">⏱ ${formatSeconds(item.timer_seconds)}</div>` : '';
+
+    const fotosHTML = (item.evidence||[]).length ? `
+      <div class="print-foto-grid">
+        ${(item.evidence||[]).map(ev => `<img src="${ev.image_data}" class="print-foto">`).join('')}
+      </div>` : '';
+
+    return `
+      <div class="print-item">
+        <div class="print-item-header">
+          <div>
+            <div class="print-item-name">${item.item_num}. ${item.nombre||'—'}</div>
+            <div style="font-size:10px;color:#9A9890">${item.categoria||'—'}</div>
+          </div>
+          <div class="print-item-score" style="color:${ic}">${item.score||0}/100</div>
+        </div>
+        ${timer}
+        <div class="print-crits">${crits}</div>
+        ${item.observaciones ? `<div class="print-obs">"${item.observaciones}"</div>` : ''}
+        ${fotosHTML}
+      </div>`;
+  }).join('');
+
+  const html = `
+    <div class="print-header">
+      <div class="print-logo">DMZ AUDIT</div>
+      <div class="print-sub">DE LA MORA ZUMARÁN KITCHEN SUPPORT · REPORTE DE AUDITORÍA</div>
+    </div>
+
+    <div class="print-score">
+      <div class="print-score-num" style="color:${color}">${audit.global_score||0}</div>
+      <div style="font-size:12px;letter-spacing:3px;text-transform:uppercase;color:${color};margin-top:4px">${nivel.label||'—'}</div>
+    </div>
+
+    <div class="print-meta">
+      ${metaRows.map(([l,v])=>`<div class="print-meta-item"><div class="print-meta-label">${l}</div><div class="print-meta-value">${v}</div></div>`).join('')}
+    </div>
+
+    ${audit.conclusion ? `<div class="print-conclusion">${audit.conclusion}</div>` : ''}
+
+    <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#C4922A;margin-bottom:12px;border-bottom:1px solid #E0DDD4;padding-bottom:6px">
+      Evaluación por Platillo (${(audit.items||[]).length} ítems)
+    </div>
+    ${itemsHTML}
+
+    <div class="print-footer">
+      DMZ Audit · dmzkitchensupport.github.io · Generado ${fecha} · Documento confidencial
+    </div>
+  `;
+
+  document.getElementById('print-report-area').innerHTML = html;
+  document.getElementById('print-report-area').style.display = 'block';
+  setTimeout(() => {
+    window.print();
+    setTimeout(() => {
+      document.getElementById('print-report-area').style.display = 'none';
+    }, 1000);
+  }, 300);
+}
+
 /* ══ REPORTE COMPLETO DE AUDITORÍA ══ */
 let currentReportId = null;
 let pendingUploadPhotos = [];
@@ -2518,6 +2612,7 @@ async function openReport(auditId) {
     });
     const d = await res.json();
     if (!d.success) throw new Error(d.message);
+    window._currentAuditData = d.audit;
     renderReport(d.audit);
   } catch(e) {
     document.getElementById('report-body').innerHTML = `<div style="color:var(--red);padding:20px">Error: ${e.message}</div>`;
@@ -3314,13 +3409,20 @@ function limpiarSalon() {
   <div class="report-modal">
     <div class="report-header">
       <h2 id="report-title">Reporte de Auditoría</h2>
-      <button class="report-close" onclick="closeReport()">×</button>
+      <div style="display:flex;align-items:center;gap:10px">
+        <button onclick="printReport(window._currentAuditData)" style="background:transparent;border:1px solid var(--gold);color:var(--gold);font-size:11px;font-weight:700;padding:6px 14px;cursor:pointer;border-radius:2px;letter-spacing:1px">⬇ PDF / IMPRIMIR</button>
+        <button class="report-close" onclick="closeReport()">×</button>
+      </div>
     </div>
     <div class="report-body" id="report-body">
       <div style="text-align:center;padding:40px;color:var(--text3)">Cargando...</div>
     </div>
   </div>
 </div>
+
+
+<!-- ÁREA DE IMPRESIÓN OCULTA -->
+<div id="print-report-area" style="display:none"></div>
 
 </body>
 </html>
