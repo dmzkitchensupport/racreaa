@@ -2081,7 +2081,10 @@ function renderHistorial() {
     const niv    = getNivel(a.global_score||0);
     const gpsOk  = a.gps_lat ? `✅ ${parseFloat(a.gps_lat).toFixed(4)},${parseFloat(a.gps_lng).toFixed(4)}` : '—';
     return `<tr>
-      <td class="mono" style="font-size:12px">${a.id||'—'}</td>
+      <td class="mono" style="font-size:12px">
+        <button onclick="openReport('${a.id}')" style="background:var(--gold);border:none;color:var(--dark);font-size:10px;font-weight:700;padding:4px 8px;cursor:pointer;border-radius:2px;letter-spacing:1px;display:block;margin-bottom:4px">REPORTE</button>
+        ${a.id||'—'}
+      </td>
       <td style="font-weight:600;color:var(--text)">${a.establecimiento||'—'}</td>
       <td>${a.auditor_name||'—'}</td>
       <td>${a.audit_date||'—'}</td>
@@ -2495,6 +2498,210 @@ function trackView(name) {
   if (window.DMZ_TRACK) {
     window.DMZ_CURRENT_VIEW = name;
     DMZ_TRACK('view_change', { action: `navigate_to_${name}` });
+  }
+}
+
+
+/* ══ REPORTE COMPLETO DE AUDITORÍA ══ */
+let currentReportId = null;
+let pendingUploadPhotos = [];
+
+async function openReport(auditId) {
+  currentReportId = auditId;
+  pendingUploadPhotos = [];
+  document.getElementById('report-overlay').classList.add('open');
+  document.getElementById('report-body').innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3)">Cargando reporte...</div>';
+
+  try {
+    const res = await fetch(`https://dmz-audit.netlify.app/api/audit-detail?id=${auditId}`, {
+      headers: { 'Authorization': `Bearer ${TOKEN}` }
+    });
+    const d = await res.json();
+    if (!d.success) throw new Error(d.message);
+    renderReport(d.audit);
+  } catch(e) {
+    document.getElementById('report-body').innerHTML = `<div style="color:var(--red);padding:20px">Error: ${e.message}</div>`;
+  }
+}
+
+function closeReport() {
+  document.getElementById('report-overlay').classList.remove('open');
+  currentReportId = null;
+  pendingUploadPhotos = [];
+}
+
+function getNivelColor(score) {
+  if (score >= 85) return '#2E7D52';
+  if (score >= 70) return '#4CAF82';
+  if (score >= 55) return '#A07820';
+  if (score >= 40) return '#C06020';
+  return '#B83232';
+}
+
+function formatSeconds(s) {
+  if (!s) return null;
+  const m = Math.floor(s/60), ss = s%60;
+  return `${m}:${String(ss).padStart(2,'0')} min`;
+}
+
+function renderReport(audit) {
+  const niv  = getNivel(audit.global_score||0);
+  const color = getNivelColor(audit.global_score||0);
+
+  const itemsHTML = (audit.items||[]).map(item => {
+    const ic = getNivelColor(item.score||0);
+    const crits = [
+      ['Presentación', item.crit_presentacion],
+      ['Temperatura',  item.crit_temperatura],
+      ['Sabor',        item.crit_sabor],
+      ['Textura',      item.crit_textura],
+      ['Porción',      item.crit_porcion],
+    ].filter(([,v]) => v !== null && v !== undefined)
+     .map(([l,v]) => `<span class="report-crit-chip">${l}: ${'★'.repeat(v||0)}${'☆'.repeat(5-(v||0))}</span>`)
+     .join('');
+
+    const timerHTML = item.timer_seconds
+      ? `<div class="report-timer">⏱ Tiempo de servicio: ${formatSeconds(item.timer_seconds)}</div>` : '';
+
+    const obsHTML = item.observaciones
+      ? `<div class="report-obs">"${item.observaciones}"</div>` : '';
+
+    const fotosHTML = (item.evidence||[]).length ? `
+      <div class="report-foto-grid">
+        ${(item.evidence||[]).map(ev => `
+          <img src="${ev.image_data}"
+               class="report-foto-thumb ${ev.admin_uploaded ? 'report-foto-admin' : ''}"
+               onclick="window.open(this.src)"
+               title="${ev.admin_uploaded ? '📎 Subida por admin' : `📍 GPS: ${ev.gps_lat||'—'},${ev.gps_lng||'—'}`}">
+        `).join('')}
+      </div>` : '';
+
+    return `
+      <div class="report-item-card">
+        <div class="report-item-header">
+          <div>
+            <div class="report-item-name">${item.item_num}. ${item.nombre||'—'}</div>
+            <div style="font-size:12px;color:var(--text3)">${item.categoria||'—'}</div>
+          </div>
+          <div class="report-item-score" style="color:${ic}">${item.score||0}</div>
+        </div>
+        <div class="report-criterios">${crits}</div>
+        ${timerHTML}
+        ${obsHTML}
+        ${fotosHTML}
+      </div>`;
+  }).join('');
+
+  const gpsHTML = audit.gps_lat
+    ? `<div class="report-meta-item"><span class="report-meta-label">GPS Envío</span><span class="report-meta-value" style="color:var(--green)">✅ ${parseFloat(audit.gps_lat).toFixed(5)}, ${parseFloat(audit.gps_lng).toFixed(5)}</span></div>` : '';
+
+  document.getElementById('report-title').textContent = `Reporte · ${audit.id}`;
+  document.getElementById('report-body').innerHTML = `
+
+    <div class="report-score-big">
+      <div class="report-score-num" style="color:${color}">${audit.global_score||0}</div>
+      <div class="report-score-label" style="color:${color}">${getNivel(audit.global_score||0).label||'—'}</div>
+    </div>
+
+    <div class="report-section">
+      <div class="report-section-title">Información General</div>
+      <div class="report-meta-grid">
+        <div class="report-meta-item"><span class="report-meta-label">ID</span><span class="report-meta-value" style="font-family:monospace;font-size:11px">${audit.id}</span></div>
+        <div class="report-meta-item"><span class="report-meta-label">Establecimiento</span><span class="report-meta-value">${audit.establecimiento||'—'}</span></div>
+        <div class="report-meta-item"><span class="report-meta-label">Auditor</span><span class="report-meta-value">${audit.auditor_name||audit.operator_full_name||'—'}</span></div>
+        <div class="report-meta-item"><span class="report-meta-label">Fecha</span><span class="report-meta-value">${audit.audit_date||'—'}</span></div>
+        <div class="report-meta-item"><span class="report-meta-label">Servicio</span><span class="report-meta-value">${audit.service_period||'—'}</span></div>
+        <div class="report-meta-item"><span class="report-meta-label">Tipo</span><span class="report-meta-value">${(audit.audit_type||'alimentos').toUpperCase()}</span></div>
+        ${audit.mesero ? `<div class="report-meta-item"><span class="report-meta-label">Mesero</span><span class="report-meta-value">${audit.mesero}</span></div>` : ''}
+        ${audit.mesa ? `<div class="report-meta-item"><span class="report-meta-label">Mesa</span><span class="report-meta-value">${audit.mesa}</span></div>` : ''}
+        <div class="report-meta-item"><span class="report-meta-label">Fotos totales</span><span class="report-meta-value">${audit.total_fotos||0} foto${(audit.total_fotos||0)!==1?'s':''}</span></div>
+        <div class="report-meta-item"><span class="report-meta-label">Timestamp</span><span class="report-meta-value" style="font-size:11px;font-family:monospace">${new Date(audit.server_timestamp).toLocaleString('es-MX')}</span></div>
+        ${gpsHTML}
+      </div>
+    </div>
+
+    ${audit.conclusion ? `
+    <div class="report-section">
+      <div class="report-section-title">Dictamen</div>
+      <div class="report-conclusion">${audit.conclusion}</div>
+    </div>` : ''}
+
+    <div class="report-section">
+      <div class="report-section-title">Evaluación por Platillo / Criterio (${(audit.items||[]).length} ítems)</div>
+      ${itemsHTML || '<div style="color:var(--text3);font-size:13px">Sin ítems registrados.</div>'}
+    </div>
+
+    <div class="report-section">
+      <div class="report-section-title">📎 Agregar Fotos Retroactivas</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:10px">
+        Las fotos subidas desde aquí quedan marcadas como "Admin Upload" sin GPS verificado.
+      </div>
+      <div class="upload-zone" onclick="document.getElementById('foto-input-admin').click()">
+        <div style="font-size:28px">📷</div>
+        <div class="upload-zone-text">Toca para seleccionar fotos</div>
+        <input type="file" id="foto-input-admin" multiple accept="image/*" style="display:none" onchange="previewAdminPhotos(event)">
+      </div>
+      <div id="admin-preview-grid" class="report-foto-grid" style="margin-top:10px"></div>
+      <button class="upload-btn" id="upload-btn" onclick="uploadAdminPhotos()" disabled>
+        Subir Fotos a esta Auditoría
+      </button>
+      <div id="upload-status" style="font-size:13px;text-align:center;margin-top:8px;color:var(--text3)"></div>
+    </div>
+  `;
+}
+
+function previewAdminPhotos(e) {
+  pendingUploadPhotos = [];
+  const grid = document.getElementById('admin-preview-grid');
+  grid.innerHTML = '';
+  const files = Array.from(e.target.files).slice(0, 20);
+
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const b64 = ev.target.result;
+      pendingUploadPhotos.push({ base64: b64, mimeType: file.type, sizeBytes: file.size });
+      const img = document.createElement('img');
+      img.src = b64;
+      img.className = 'report-foto-thumb';
+      grid.appendChild(img);
+      document.getElementById('upload-btn').disabled = false;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function uploadAdminPhotos() {
+  if (!pendingUploadPhotos.length || !currentReportId) return;
+  const btn    = document.getElementById('upload-btn');
+  const status = document.getElementById('upload-status');
+  btn.disabled = true;
+  btn.textContent = 'Subiendo...';
+  status.textContent = '';
+
+  try {
+    const res = await fetch('https://dmz-audit.netlify.app/api/upload-evidence', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TOKEN}` },
+      body: JSON.stringify({ audit_id: currentReportId, photos: pendingUploadPhotos })
+    });
+    const d = await res.json();
+    if (d.success) {
+      status.style.color = 'var(--green)';
+      status.textContent = '✅ ' + d.message;
+      btn.textContent = '✅ Subidas';
+      pendingUploadPhotos = [];
+      document.getElementById('admin-preview-grid').innerHTML = '';
+      // Recargar el reporte
+      setTimeout(() => openReport(currentReportId), 1500);
+    } else {
+      throw new Error(d.message);
+    }
+  } catch(e) {
+    status.style.color = 'var(--red)';
+    status.textContent = '❌ Error: ' + e.message;
+    btn.disabled = false;
+    btn.textContent = 'Reintentar';
   }
 }
 
@@ -3101,5 +3308,19 @@ function limpiarSalon() {
 })();
 
 </script>
+
+<!-- MODAL REPORTE AUDITORÍA -->
+<div class="report-overlay" id="report-overlay" onclick="if(event.target===this)closeReport()">
+  <div class="report-modal">
+    <div class="report-header">
+      <h2 id="report-title">Reporte de Auditoría</h2>
+      <button class="report-close" onclick="closeReport()">×</button>
+    </div>
+    <div class="report-body" id="report-body">
+      <div style="text-align:center;padding:40px;color:var(--text3)">Cargando...</div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
