@@ -1,3 +1,4 @@
+// v2 deploy 1778010096
 const impl = require('./upload-evidence_impl');
 const ALLOWED_ORIGINS = ['https://dmzkitchensupport.github.io','https://mariozumaran.github.io','https://dmz-audit.netlify.app'];
 exports.handler = async (event) => {
