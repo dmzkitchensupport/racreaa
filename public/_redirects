@@ -14,3 +14,5 @@
 /api/health           /.netlify/functions/health           200
 /api/tenant-branding  /.netlify/functions/tenant-branding  200
 /api/audit-session       /.netlify/functions/audit-session       200
+/api/audit-detail        /.netlify/functions/audit-detail        200
+/api/upload-evidence     /.netlify/functions/upload-evidence     200
