@@ -1,14 +1,20 @@
 {
-  "name": "racreaa",
+  "name": "dmz-audit-api",
   "version": "1.0.0",
-  "description": "RACREAA \u2014 Plataforma SaaS B2B Multi-Tenant de Auditor\u00eda Operativa para Alimentos y Bebidas",
-  "dependencies": {
-    "bcryptjs": "^2.4.3",
-    "jsonwebtoken": "^9.0.0",
-    "pg": "^8.11.0",
-    "resend": "^3.0.0"
+  "description": "DMZ Audit Backend API — De La Mora Zumarán Kitchen Support",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
   },
   "engines": {
-    "node": ">=18"
+    "node": "18.x"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "express": "^4.22.1",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.20.0",
+    "resend": "^2.1.0"
   }
 }
