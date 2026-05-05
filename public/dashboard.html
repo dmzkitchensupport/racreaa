@@ -916,6 +916,95 @@ body{background:var(--bg);font-family:'Morl',sans-serif;color:var(--text);displa
   .sidebar.open { transform: translateX(0); }
   .kpi-grid { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* ══ MODAL REPORTE AUDITORÍA ══ */
+.report-overlay {
+  position:fixed;inset:0;background:rgba(0,0,0,.75);
+  z-index:900;display:none;align-items:flex-start;
+  justify-content:center;padding:20px;overflow-y:auto;
+}
+.report-overlay.open { display:flex !important; }
+.report-modal {
+  background:#1A1917;border:1px solid rgba(196,146,42,.2);
+  border-radius:4px;width:100%;max-width:740px;margin:auto;position:relative;
+}
+.report-header {
+  background:#111010;padding:18px 24px;
+  border-bottom:2px solid #C4922A;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.report-header h2 {font-size:13px;font-weight:700;color:#C4922A;letter-spacing:2px;text-transform:uppercase;}
+.report-body {padding:24px;}
+.report-close {background:transparent;border:none;color:rgba(250,250,247,.4);font-size:24px;cursor:pointer;line-height:1;padding:0 4px;}
+.report-close:hover {color:#FAFAF7;}
+.report-section {margin-bottom:24px;}
+.report-section-title {
+  font-size:10px;font-weight:700;letter-spacing:2px;
+  color:#C4922A;text-transform:uppercase;margin-bottom:12px;
+  padding-bottom:6px;border-bottom:1px solid rgba(196,146,42,.15);
+}
+.report-meta-grid {display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.report-meta-item {
+  display:flex;flex-direction:column;gap:3px;
+  background:rgba(255,255,255,.03);padding:10px 12px;border-radius:2px;
+  border:1px solid rgba(255,255,255,.06);
+}
+.report-meta-label {font-size:10px;color:rgba(250,250,247,.35);letter-spacing:1px;text-transform:uppercase;}
+.report-meta-value {font-size:13px;color:#FAFAF7;font-weight:500;}
+.report-item-card {
+  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);
+  padding:14px 16px;margin-bottom:10px;border-radius:2px;
+}
+.report-item-header {display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;}
+.report-item-name {font-size:14px;font-weight:600;color:#FAFAF7;}
+.report-item-score {font-size:22px;font-weight:900;}
+.report-criterios {display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;}
+.report-crit-chip {
+  font-size:11px;padding:3px 8px;border-radius:2px;
+  background:rgba(255,255,255,.04);color:rgba(250,250,247,.6);
+  border:1px solid rgba(255,255,255,.08);
+}
+.report-timer {font-size:11px;color:rgba(250,250,247,.4);font-family:monospace;margin-bottom:4px;}
+.report-obs {font-size:13px;color:rgba(250,250,247,.55);font-style:italic;margin-top:6px;}
+.report-foto-grid {display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px;}
+.report-foto-thumb {
+  width:100%;aspect-ratio:1;object-fit:cover;
+  border-radius:2px;border:1px solid rgba(255,255,255,.1);cursor:pointer;
+}
+.report-foto-admin {border:2px solid #C4922A !important;}
+.upload-zone {
+  border:2px dashed rgba(255,255,255,.12);border-radius:4px;
+  padding:20px;text-align:center;cursor:pointer;
+  transition:border-color .2s;margin-top:12px;
+}
+.upload-zone:hover {border-color:#C4922A;}
+.upload-zone-text {font-size:13px;color:rgba(250,250,247,.4);margin-top:8px;}
+.upload-btn {
+  background:#C4922A;border:none;color:#111010;
+  font-size:12px;font-weight:700;letter-spacing:1px;
+  padding:10px 20px;cursor:pointer;border-radius:2px;
+  text-transform:uppercase;margin-top:12px;width:100%;
+}
+.upload-btn:disabled {opacity:.4;cursor:not-allowed;}
+.report-score-big {
+  text-align:center;padding:20px;
+  background:rgba(255,255,255,.03);margin-bottom:20px;
+  border-radius:2px;border:1px solid rgba(255,255,255,.06);
+}
+.report-score-num {font-size:56px;font-weight:900;line-height:1;}
+.report-score-label {font-size:11px;letter-spacing:3px;text-transform:uppercase;margin-top:4px;}
+.report-conclusion {
+  background:rgba(196,146,42,.06);padding:14px 16px;
+  border-left:3px solid #C4922A;font-size:14px;
+  color:rgba(250,250,247,.7);line-height:1.6;border-radius:0 2px 2px 0;
+}
+.report-pdf-btn {
+  background:transparent;border:1px solid #C4922A;color:#C4922A;
+  font-size:11px;font-weight:700;padding:6px 14px;cursor:pointer;
+  border-radius:2px;letter-spacing:1px;
+}
+.report-pdf-btn:hover {background:rgba(196,146,42,.1);}
+
 </style>
 </head>
 <body>
@@ -2081,9 +2170,9 @@ function renderHistorial() {
     const niv    = getNivel(a.global_score||0);
     const gpsOk  = a.gps_lat ? `✅ ${parseFloat(a.gps_lat).toFixed(4)},${parseFloat(a.gps_lng).toFixed(4)}` : '—';
     return `<tr>
-      <td class="mono" style="font-size:12px">
-        <button onclick="openReport('${a.id}')" style="background:var(--gold);border:none;color:var(--dark);font-size:10px;font-weight:700;padding:4px 8px;cursor:pointer;border-radius:2px;letter-spacing:1px;display:block;margin-bottom:4px">REPORTE</button>
-        ${a.id||'—'}
+      <td style="min-width:110px;max-width:160px;">
+        <button onclick="openReport('${a.id}')" style="background:#C4922A;border:none;color:#111010;font-size:9px;font-weight:700;padding:3px 8px;cursor:pointer;border-radius:2px;letter-spacing:1px;display:block;margin-bottom:4px;width:100%;text-align:center">▶ REPORTE</button>
+        <span style="font-family:monospace;font-size:10px;color:rgba(250,250,247,.4);word-break:break-all">${(a.id||'—').replace('AUD-','')}</span>
       </td>
       <td style="font-weight:600;color:var(--text)">${a.establecimiento||'—'}</td>
       <td>${a.auditor_name||'—'}</td>
