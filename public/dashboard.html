@@ -1932,8 +1932,8 @@ const SESSION = (() => {
   const at  = sessionStorage.getItem('racreaa_at');
   const op  = JSON.parse(sessionStorage.getItem('racreaa_op')||'null');
   const ten = JSON.parse(sessionStorage.getItem('racreaa_tenant')||'null');
-  // Para demo sin login previo
-  if (!at) return { token: null, operator: { full_name:'Mario De La Mora', role:'admin' }, tenant: { slug:'dmz', name:'De La Mora Zumarán Kitchen Support', plan:'enterprise' } };
+  // Si no hay token, redirigir al login
+  if (!at) { window.location.href = '/login.html'; return { token: null, operator: null, tenant: null }; }
   return { token: at, operator: op, tenant: ten };
 })();
 
