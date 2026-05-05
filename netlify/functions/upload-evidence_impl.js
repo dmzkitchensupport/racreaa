@@ -109,8 +109,8 @@ module.exports = async function handler(req, res) {
 
   } catch(err) {
     await client.query('ROLLBACK').catch(()=>{});
-    console.error('[upload-evidence]', err.message);
-    return res.status(500).json({ success: false, message: 'Error al guardar fotos.' });
+    console.error('[upload-evidence]', err.message, err.stack?.slice(0,200));
+    return res.status(500).json({ success: false, message: 'Error al guardar fotos.', detail: err.message });
   } finally {
     client.release();
   }
