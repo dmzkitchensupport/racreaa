@@ -91,12 +91,13 @@ module.exports = async function handler(req, res) {
     }
 
     // Log inmutable
+    const clientIp = (req.headers['x-forwarded-for']||'').split(',')[0].trim() || '127.0.0.1';
     await client.query(`
       INSERT INTO racreaa.audit_logs
         (id,tenant_id,operator_id,audit_id,action,entity_type,entity_id,
          client_ip,user_agent,request_id,payload_hash,occurred_at)
       VALUES (gen_random_uuid(),$1,$2,$3,'EVIDENCE_UPLOADED_ADMIN','audit_evidence',$3,$4,$5,$6,$7,NOW())
-    `, [tenantId, operatorId, audit_id, 'admin', 'dashboard', crypto.randomUUID(),
+    `, [tenantId, operatorId, audit_id, clientIp, 'dashboard-admin', crypto.randomUUID(),
         crypto.createHash('sha256').update(`${audit_id}${count}${serverTs}`).digest('hex')]);
 
     await client.query('COMMIT');
