@@ -309,6 +309,14 @@ body { background:var(--bg); font-family:'Morl',sans-serif; color:var(--text); f
 
 /* Timer por platillo */
 .platillo-timer {
+  display: flex; justify-content: space-between; align-items: center;
+  background: rgba(0,0,0,.15); border-radius: 4px; padding: 10px 12px; margin-bottom: 12px;
+  border-left: 3px solid rgba(255,255,255,.1); transition: border-color .4s;
+}
+/* Semáforo: verde/amarillo/rojo según tiempo */
+.platillo-timer.sem-ok     { border-left-color: #1B5E38; }
+.platillo-timer.sem-warn   { border-left-color: #A07820; }
+.platillo-timer.sem-late   { border-left-color: #B83232; }
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -413,23 +421,35 @@ body { background:var(--bg); font-family:'Morl',sans-serif; color:var(--text); f
 .crit-block { margin-bottom: 10px; }
 .crit-name { font-size:14px; letter-spacing: 1px; color: var(--text3); text-transform: uppercase; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; }
 /* ── RATING SEGMENTADO 1-5 ── */
+/* ══ ECT — Escala de Cumplimiento Técnico 1-10 ══ */
 .seg-rating { display: flex; border-radius: 3px; overflow: hidden; border: 1px solid rgba(255,255,255,.08); }
 .seg-btn-r {
-  flex: 1; padding: 12px 0; text-align: center;
-  font-size: 16px; font-weight: 800; cursor: pointer;
-  transition: all .12s; color: rgba(250,250,247,.25);
+  flex: 1; padding: 11px 0; text-align: center;
+  font-size: 14px; font-weight: 800; cursor: pointer;
+  transition: background .12s, color .12s; color: rgba(250,250,247,.3);
   background: rgba(255,255,255,.03);
   border-right: 1px solid rgba(255,255,255,.06);
   -webkit-user-select: none; user-select: none;
-  touch-action: manipulation;
+  touch-action: manipulation; letter-spacing: .5px;
 }
 .seg-btn-r:last-child { border-right: none; }
-.seg-btn-r:active { opacity: .7; }
-.seg-btn-r.v1.sel { background: #B83232; color: #fff; }
-.seg-btn-r.v2.sel { background: #C06020; color: #fff; }
-.seg-btn-r.v3.sel { background: #A07820; color: #fff; }
-.seg-btn-r.v4.sel { background: #2E7D52; color: #fff; }
-.seg-btn-r.v5.sel { background: #1B5E38; color: #fff; }
+.seg-btn-r:active { opacity: .65; }
+/* ECT semáforo: 1-2 Crítico · 3-4 Deficiente · 5-6 Estándar · 7-8 Bueno · 9-10 Excelencia */
+.seg-btn-r.v1.sel,.seg-btn-r.v2.sel  { background:#B83232; color:#fff; }
+.seg-btn-r.v3.sel,.seg-btn-r.v4.sel  { background:#C06020; color:#fff; }
+.seg-btn-r.v5.sel,.seg-btn-r.v6.sel  { background:#A07820; color:#fff; }
+.seg-btn-r.v7.sel,.seg-btn-r.v8.sel  { background:#2E7D52; color:#fff; }
+.seg-btn-r.v9.sel,.seg-btn-r.v10.sel { background:#1B5E38; color:#fff; }
+/* ECT label debajo del rating */
+.ect-descriptor {
+  font-size:11px; letter-spacing:2px; text-transform:uppercase;
+  text-align:center; margin-top:5px; height:14px; transition:color .2s;
+}
+.ect-critico    { color:#B83232; }
+.ect-deficiente { color:#C06020; }
+.ect-estandar   { color:#A07820; }
+.ect-bueno      { color:#2E7D52; }
+.ect-excelencia { color:#1B5E38; }
 
 /* Botón cámara */
 .btn-camera {
@@ -893,6 +913,7 @@ body::after {
     </div>
     <div class="tb-right">
       <span class="clock-sm" id="clock-m">00:00</span>
+      <span id="autosave-dot" title="Auto-guardado" style="font-size:18px;opacity:.3;color:rgba(255,255,255,.3);transition:opacity .3s,color .3s;cursor:default;user-select:none;">●</span>
       <button class="btn-logout-sm" onclick="logout()">Salir</button>
     </div>
   </div>
@@ -1262,6 +1283,116 @@ const CATS_M = ['Entrada','Sopa','Ensalada','Platillo fuerte','Guarnición','Pos
 
 let cardsM = [], counterM = 0;
 
+/* ══════════════════════════════════════════
+   PERSISTENCIA OFFLINE-FIRST — IndexedDB
+   ══════════════════════════════════════════ */
+const TIEMPO_LIMITE_MIN = 20; // estándar de servicio en minutos
+
+// ID de sesión persistente — sobrevive F5
+const SESSION_ID = (() => {
+  let id = localStorage.getItem('dmz_audit_session');
+  if (!id) { id = 'SES-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).slice(2,6).toUpperCase(); localStorage.setItem('dmz_audit_session', id); }
+  return id;
+})();
+
+let idb = null;
+const IDB_NAME = 'dmz_audit_v1', IDB_STORE = 'draft';
+
+function openIDB() {
+  return new Promise((res, rej) => {
+    const req = indexedDB.open(IDB_NAME, 1);
+    req.onupgradeneeded = e => e.target.result.createObjectStore(IDB_STORE);
+    req.onsuccess = e => { idb = e.target.result; res(idb); };
+    req.onerror   = () => rej(req.error);
+  });
+}
+
+async function idbSave() {
+  if (!idb) return;
+  try {
+    const draft = {
+      session: SESSION_ID,
+      ts: Date.now(),
+      counterM,
+      cardsM: cardsM.map(c => ({
+        ...c,
+        evidence: (c.evidence || []).map(ev => ({ ...ev, base64: ev.base64?.slice(0,50)+'…' })) // no persisto fotos completas
+      })),
+      platilloTimers,
+      formGlobal: {
+        establecimiento: document.getElementById('m-estab')?.value || '',
+        fecha:           document.getElementById('m-fecha')?.value || '',
+        servicio:        document.getElementById('m-servicio')?.value || '',
+        auditor:         document.getElementById('m-auditor')?.value || '',
+      }
+    };
+    const tx = idb.transaction(IDB_STORE, 'readwrite');
+    tx.objectStore(IDB_STORE).put(draft, 'current');
+  } catch(e) { console.warn('[IDB save]', e); }
+}
+
+async function idbLoad() {
+  if (!idb) return null;
+  return new Promise(res => {
+    const tx  = idb.transaction(IDB_STORE, 'readonly');
+    const req = tx.objectStore(IDB_STORE).get('current');
+    req.onsuccess = () => res(req.result || null);
+    req.onerror   = () => res(null);
+  });
+}
+
+async function idbClear() {
+  if (!idb) return;
+  const tx = idb.transaction(IDB_STORE, 'readwrite');
+  tx.objectStore(IDB_STORE).delete('current');
+}
+
+// Iniciar IDB al cargar
+openIDB().then(() => {
+  // Auto-restaurar borrador si existe
+  idbLoad().then(draft => {
+    if (!draft || !draft.cardsM?.length) return;
+    const age = (Date.now() - (draft.ts||0)) / 3600000;
+    if (age > 8) return; // descartar borradores de más de 8h
+    // Notificar al usuario
+    const bar = document.createElement('div');
+    bar.style.cssText = 'position:fixed;top:calc(54px + env(safe-area-inset-top));left:0;right:0;background:#8A6C1E;color:#fff;font-size:13px;letter-spacing:1px;text-transform:uppercase;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;z-index:500;';
+    bar.innerHTML = `<span>📋 Borrador recuperado · ${draft.cardsM.length} platillo${draft.cardsM.length!==1?'s':''}</span><div style="display:flex;gap:8px;"><button onclick="restoreDraft()" style="background:#C4922A;border:none;color:#fff;font-size:12px;font-weight:700;letter-spacing:1px;padding:5px 10px;cursor:pointer;border-radius:2px;">RESTAURAR</button><button onclick="this.parentElement.parentElement.remove()" style="background:transparent;border:1px solid rgba(255,255,255,.3);color:#fff;font-size:12px;padding:5px 10px;cursor:pointer;border-radius:2px;">IGNORAR</button></div>`;
+    document.body.appendChild(bar);
+    window._pendingDraft = draft;
+  });
+}).catch(() => {});
+
+window.restoreDraft = function() {
+  const draft = window._pendingDraft; if (!draft) return;
+  document.querySelectorAll('.draft-restore-bar').forEach(el => el.remove());
+  document.querySelector('[onclick*="restoreDraft"]')?.closest('div[style]')?.remove();
+  // Restaurar cards
+  document.getElementById('cards-col-m').innerHTML = '';
+  cardsM = []; counterM = 0;
+  (draft.cardsM || []).forEach(() => addCardM());
+  // Restaurar timers
+  Object.assign(platilloTimers, draft.platilloTimers || {});
+  // Restaurar form global
+  const fg = draft.formGlobal || {};
+  if (fg.establecimiento && document.getElementById('m-estab')) document.getElementById('m-estab').value = fg.establecimiento;
+  if (fg.fecha && document.getElementById('m-fecha')) document.getElementById('m-fecha').value = fg.fecha;
+  if (fg.servicio && document.getElementById('m-servicio')) document.getElementById('m-servicio').value = fg.servicio;
+  if (fg.auditor && document.getElementById('m-auditor')) document.getElementById('m-auditor').value = fg.auditor;
+  updateFAB();
+};
+
+// Auto-save cada 30 segundos
+setInterval(() => { idbSave(); showSaveFlash(); }, 30000);
+
+// Indicador de auto-save en topbar
+function showSaveFlash() {
+  const el = document.getElementById('autosave-dot');
+  if (!el) return;
+  el.style.opacity = '1'; el.style.color = 'var(--gold)';
+  setTimeout(() => { el.style.opacity = '.3'; el.style.color = 'rgba(255,255,255,.3)'; }, 800);
+}
+
 function addCardM() {
   counterM++;
   const id = 'cm'+Date.now();
@@ -1281,8 +1412,9 @@ function addCardM() {
         <span id="cs-${id}-${c.key}" style="font-family:'Morl',sans-serif;font-weight:700;font-size:15px;color:var(--text3)">—</span>
       </div>
       <div class="seg-rating">
-        ${[1,2,3,4,5].map(i=>`<div class="seg-btn-r v${i}" onclick="setStarM('${id}','${c.key}',${i})">${i}</div>`).join('')}
+        ${[1,2,3,4,5,6,7,8,9,10].map(i=>`<div class="seg-btn-r v${i}" onclick="setStarM('${id}','${c.key}',${i})">${i}</div>`).join('')}
       </div>
+      <div class="ect-descriptor" id="ect-${id}-${c.key}"></div>
     </div>`).join('');
 
   div.innerHTML = `
@@ -1372,13 +1504,37 @@ function stampPlatilloEnd(id) {
   const endEl = document.getElementById(`pt-end-${id}`);
   if (endEl) { endEl.textContent = hhmm; endEl.classList.remove('muted'); endEl.style.color = 'rgba(255,255,255,.8)'; }
 
-  // Calcular duración
+  // Calcular duración y aplicar semáforo
   const diffSec = Math.floor((now - platilloTimers[id].start) / 1000);
   const mm = Math.floor(diffSec / 60);
   const ss = diffSec % 60;
+  const diffMin = diffSec / 60;
+
   const dur = mm > 0 ? `${mm}m ${ss}s` : `${ss}s`;
   const durEl = document.getElementById(`pt-dur-${id}`);
-  if (durEl) durEl.textContent = dur;
+
+  // Color semáforo
+  let semColor = '#1B5E38', semClass = 'sem-ok';
+  if (diffMin > TIEMPO_LIMITE_MIN)               { semColor = '#B83232'; semClass = 'sem-late'; }
+  else if (diffMin > TIEMPO_LIMITE_MIN * 0.75)   { semColor = '#A07820'; semClass = 'sem-warn'; }
+
+  if (durEl) { durEl.textContent = dur; durEl.style.color = semColor; }
+
+  // Clase semáforo en contenedor timer
+  const timerContainer = document.getElementById(id)?.querySelector('.platillo-timer');
+  if (timerContainer) {
+    timerContainer.classList.remove('sem-ok','sem-warn','sem-late');
+    timerContainer.classList.add(semClass);
+  }
+  idbSave();
+}
+
+function getECTDesc(val) {
+  if (val <= 2)  return { label:'Crítico',     cls:'ect-critico' };
+  if (val <= 4)  return { label:'Deficiente',  cls:'ect-deficiente' };
+  if (val <= 6)  return { label:'Estándar',    cls:'ect-estandar' };
+  if (val <= 8)  return { label:'Bueno',       cls:'ect-bueno' };
+  return              { label:'Excelencia',  cls:'ect-excelencia' };
 }
 
 function setStarM(id, crit, val) {
@@ -1388,22 +1544,45 @@ function setStarM(id, crit, val) {
   const block = card.querySelector(`.crit-block[data-crit="${crit}"]`);
   if (block) block.querySelectorAll('.seg-btn-r').forEach((s,i) => s.classList.toggle('sel', i+1===val));
   const sc = document.getElementById(`cs-${id}-${crit}`); if(sc) sc.textContent = val;
-  // Marcar hora de fin en la primera calificación completa
+  // Descriptor ECT
+  const ectEl = document.getElementById(`ect-${id}-${crit}`);
+  if (ectEl) {
+    const ect = getECTDesc(val);
+    ectEl.textContent = ect.label;
+    ectEl.className = `ect-descriptor ${ect.cls}`;
+  }
+  // Marcar fin cuando todos los criterios están calificados
   const allFilled = Object.values(d.criterios).every(v=>v>0);
-  if (allFilled) stampPlatilloEnd(id);
+  if (allFilled) { stampPlatilloEnd(id); idbSave(); }
   calcCardM(d); updateFAB();
 }
 
 function calcCardM(d) {
-  const vals = Object.values(d.criterios), sum = vals.reduce((a,b)=>a+b,0);
-  if (!sum) return;
-  const pct = Math.round((sum/(CRIT_M.length*5))*100);
-  const nk  = getNKey(pct); const nm = NMAP[nk];
+  const vals = Object.values(d.criterios).filter(v=>v>0);
+  if (!vals.length) return;
+  // ECT: promedio sobre 10, convertido a score 0-100
+  const avg  = vals.reduce((a,b)=>a+b,0) / CRIT_M.length;
+  const pct  = Math.round(avg * 10);
+  const nk   = getNKey(pct); const nm = NMAP[nk];
   d._pct = pct; d._nivel = nk;
   const psb  = document.getElementById(`psb-${d.id}`); if(psb){psb.textContent=pct; psb.style.color=nm.hex;}
   const pscv = document.getElementById(`pscv-${d.id}`); if(pscv){pscv.textContent=pct; pscv.style.color=nm.hex;}
   const pniv = document.getElementById(`pniv-${d.id}`); if(pniv){pniv.textContent=nm.label; pniv.style.background=nm.lt; pniv.style.color=nm.hex;}
   const card = document.getElementById(d.id); if(card) card.setAttribute('data-nivel',nk);
+  // Semáforo timer: verificar si el platillo excede estándar (20 min)
+  const timers = platilloTimers[d.id];
+  if (timers?.start && timers?.end) {
+    const diffMin = (timers.end - timers.start) / 60000;
+    const durEl = document.getElementById(`pt-dur-${d.id}`);
+    if (durEl) {
+      const mm = Math.floor(diffMin), ss = Math.round((diffMin - mm)*60);
+      let semColor = '#1B5E38'; // verde
+      if (diffMin > TIEMPO_LIMITE_MIN) semColor = '#B83232'; // rojo
+      else if (diffMin > TIEMPO_LIMITE_MIN * 0.75) semColor = '#A07820'; // amarillo
+      durEl.style.color = semColor;
+    }
+  }
+  idbSave();
 }
 
 function updCardM(id,f,v){ const d=cardsM.find(c=>c.id===id); if(d) d[f]=v; }
@@ -1642,6 +1821,8 @@ async function submitFromSheet() {
     const result = await res.json();
     if (res.ok && result.success) {
       showSheetStatus('success', `✅ Enviada — ${result.auditId}`);
+      idbClear(); // limpiar borrador tras envío exitoso
+      localStorage.removeItem('dmz_audit_session');
 
       // Enviar reporte WA al administrador
       enviarReporteWA(payload, result.auditId, avgScore);
