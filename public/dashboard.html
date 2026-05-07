@@ -513,10 +513,18 @@ body{background:var(--bg);font-family:'Morl',sans-serif;color:var(--text);displa
 .criterios{display:flex;flex-direction:column;gap:6px;}
 .criterio-row{display:flex;align-items:center;gap:8px;}
 .crit-label{font-size:12px;color:var(--text3);width:96px;flex-shrink:0;}
-.stars{display:flex;gap:2px;}
-.star{font-size:15px;cursor:pointer;color:var(--border2);transition:transform .12s,color .12s;user-select:none;line-height:1;}
-.star:hover{transform:scale(1.25);}
-.star.on{color:var(--gold);}
+/* ECT — Escala Cumplimiento Técnico 1-10 */
+.ect-row{display:flex;border-radius:3px;overflow:hidden;border:1px solid rgba(255,255,255,.08);margin:4px 0;}
+.ect-btn{flex:1;padding:9px 0;text-align:center;font-size:12px;font-weight:800;cursor:pointer;color:rgba(250,250,247,.25);background:rgba(255,255,255,.03);border-right:1px solid rgba(255,255,255,.06);-webkit-user-select:none;user-select:none;touch-action:manipulation;}
+.ect-btn:last-child{border-right:none;}
+.ect-btn:active{opacity:.65;}
+.ect-btn.v1.sel,.ect-btn.v2.sel{background:#B83232;color:#fff;}
+.ect-btn.v3.sel,.ect-btn.v4.sel{background:#C06020;color:#fff;}
+.ect-btn.v5.sel,.ect-btn.v6.sel{background:#A07820;color:#fff;}
+.ect-btn.v7.sel,.ect-btn.v8.sel{background:#2E7D52;color:#fff;}
+.ect-btn.v9.sel,.ect-btn.v10.sel{background:#1B5E38;color:#fff;}
+.ect-desc{font-size:10px;letter-spacing:2px;text-transform:uppercase;text-align:center;margin-top:3px;height:12px;transition:color .2s;}
+.ect-critico{color:#B83232;} .ect-deficiente{color:#C06020;} .ect-estandar{color:#A07820;} .ect-bueno{color:#2E7D52;} .ect-excelencia{color:#1B5E38;}
 .score-bar-wrap{flex:1;height:3px;background:var(--surface2);border-radius:2px;overflow:hidden;}
 .score-bar-fill{height:100%;background:var(--gold);border-radius:2px;transition:width .3s;}
 .crit-score{font-family:'Morl',sans-serif;font-weight:700;font-size:13px;color:var(--text3);min-width:12px;text-align:right;}
@@ -1464,46 +1472,22 @@ body{background:var(--bg);font-family:'Morl',sans-serif;color:var(--text);displa
               <div class="rubrica-item">
                 <span class="rubrica-texto">Tiempo de reacción ≤ 60 seg / saludo proactivo antes de ser solicitado</span>
                 <span class="rubrica-peso">20%</span>
-                <div class="rubrica-stars" data-criterio="sc-1" data-sub="tiempo">
-                  <span class="rubrica-star" onclick="setSubStar('sc-1','tiempo',1,this)">★</span>
-                  <span class="rubrica-star" onclick="setSubStar('sc-1','tiempo',2,this)">★</span>
-                  <span class="rubrica-star" onclick="setSubStar('sc-1','tiempo',3,this)">★</span>
-                  <span class="rubrica-star" onclick="setSubStar('sc-1','tiempo',4,this)">★</span>
-                  <span class="rubrica-star" onclick="setSubStar('sc-1','tiempo',5,this)">★</span>
-                </div>
+                <div class="ect-row" data-criterio="sc-1" data-sub="tiempo" style="max-width:200px"><div class="ect-btn v1" onclick="setSubStarECT('sc-1','tiempo',1,this)">1</div><div class="ect-btn v2" onclick="setSubStarECT('sc-1','tiempo',2,this)">2</div><div class="ect-btn v3" onclick="setSubStarECT('sc-1','tiempo',3,this)">3</div><div class="ect-btn v4" onclick="setSubStarECT('sc-1','tiempo',4,this)">4</div><div class="ect-btn v5" onclick="setSubStarECT('sc-1','tiempo',5,this)">5</div><div class="ect-btn v6" onclick="setSubStarECT('sc-1','tiempo',6,this)">6</div><div class="ect-btn v7" onclick="setSubStarECT('sc-1','tiempo',7,this)">7</div><div class="ect-btn v8" onclick="setSubStarECT('sc-1','tiempo',8,this)">8</div><div class="ect-btn v9" onclick="setSubStarECT('sc-1','tiempo',9,this)">9</div><div class="ect-btn v10" onclick="setSubStarECT('sc-1','tiempo',10,this)">10</div></div>
               </div>
               <div class="rubrica-item">
                 <span class="rubrica-texto">Calidad del saludo: verbal, contacto visual y lenguaje corporal positivo</span>
                 <span class="rubrica-peso">30%</span>
-                <div class="rubrica-stars" data-criterio="sc-1" data-sub="calidad">
-                  <span class="rubrica-star" onclick="setSubStar('sc-1','calidad',1,this)">★</span>
-                  <span class="rubrica-star" onclick="setSubStar('sc-1','calidad',2,this)">★</span>
-                  <span class="rubrica-star" onclick="setSubStar('sc-1','calidad',3,this)">★</span>
-                  <span class="rubrica-star" onclick="setSubStar('sc-1','calidad',4,this)">★</span>
-                  <span class="rubrica-star" onclick="setSubStar('sc-1','calidad',5,this)">★</span>
-                </div>
+                <div class="ect-row" data-criterio="sc-1" data-sub="calidad" style="max-width:200px"><div class="ect-btn v1" onclick="setSubStarECT('sc-1','calidad',1,this)">1</div><div class="ect-btn v2" onclick="setSubStarECT('sc-1','calidad',2,this)">2</div><div class="ect-btn v3" onclick="setSubStarECT('sc-1','calidad',3,this)">3</div><div class="ect-btn v4" onclick="setSubStarECT('sc-1','calidad',4,this)">4</div><div class="ect-btn v5" onclick="setSubStarECT('sc-1','calidad',5,this)">5</div><div class="ect-btn v6" onclick="setSubStarECT('sc-1','calidad',6,this)">6</div><div class="ect-btn v7" onclick="setSubStarECT('sc-1','calidad',7,this)">7</div><div class="ect-btn v8" onclick="setSubStarECT('sc-1','calidad',8,this)">8</div><div class="ect-btn v9" onclick="setSubStarECT('sc-1','calidad',9,this)">9</div><div class="ect-btn v10" onclick="setSubStarECT('sc-1','calidad',10,this)">10</div></div>
               </div>
               <div class="rubrica-item">
                 <span class="rubrica-texto">Presentación personal con nombre / personalización del servicio</span>
                 <span class="rubrica-peso">25%</span>
-                <div class="rubrica-stars" data-criterio="sc-1" data-sub="presentacion">
-                  <span class="rubrica-star" onclick="setSubStar('sc-1','presentacion',1,this)">★</span>
-                  <span class="rubrica-star" onclick="setSubStar('sc-1','presentacion',2,this)">★</span>
-                  <span class="rubrica-star" onclick="setSubStar('sc-1','presentacion',3,this)">★</span>
-                  <span class="rubrica-star" onclick="setSubStar('sc-1','presentacion',4,this)">★</span>
-                  <span class="rubrica-star" onclick="setSubStar('sc-1','presentacion',5,this)">★</span>
-                </div>
+                <div class="ect-row" data-criterio="sc-1" data-sub="presentacion" style="max-width:200px"><div class="ect-btn v1" onclick="setSubStarECT('sc-1','presentacion',1,this)">1</div><div class="ect-btn v2" onclick="setSubStarECT('sc-1','presentacion',2,this)">2</div><div class="ect-btn v3" onclick="setSubStarECT('sc-1','presentacion',3,this)">3</div><div class="ect-btn v4" onclick="setSubStarECT('sc-1','presentacion',4,this)">4</div><div class="ect-btn v5" onclick="setSubStarECT('sc-1','presentacion',5,this)">5</div><div class="ect-btn v6" onclick="setSubStarECT('sc-1','presentacion',6,this)">6</div><div class="ect-btn v7" onclick="setSubStarECT('sc-1','presentacion',7,this)">7</div><div class="ect-btn v8" onclick="setSubStarECT('sc-1','presentacion',8,this)">8</div><div class="ect-btn v9" onclick="setSubStarECT('sc-1','presentacion',9,this)">9</div><div class="ect-btn v10" onclick="setSubStarECT('sc-1','presentacion',10,this)">10</div></div>
               </div>
               <div class="rubrica-item">
                 <span class="rubrica-texto">Entrega de menú / carta con protocolo: abierto, dama primero, postura</span>
                 <span class="rubrica-peso">25%</span>
-                <div class="rubrica-stars" data-criterio="sc-1" data-sub="menu">
-                  <span class="rubrica-star" onclick="setSubStar('sc-1','menu',1,this)">★</span>
-                  <span class="rubrica-star" onclick="setSubStar('sc-1','menu',2,this)">★</span>
-                  <span class="rubrica-star" onclick="setSubStar('sc-1','menu',3,this)">★</span>
-                  <span class="rubrica-star" onclick="setSubStar('sc-1','menu',4,this)">★</span>
-                  <span class="rubrica-star" onclick="setSubStar('sc-1','menu',5,this)">★</span>
-                </div>
+                <div class="ect-row" data-criterio="sc-1" data-sub="menu" style="max-width:200px"><div class="ect-btn v1" onclick="setSubStarECT('sc-1','menu',1,this)">1</div><div class="ect-btn v2" onclick="setSubStarECT('sc-1','menu',2,this)">2</div><div class="ect-btn v3" onclick="setSubStarECT('sc-1','menu',3,this)">3</div><div class="ect-btn v4" onclick="setSubStarECT('sc-1','menu',4,this)">4</div><div class="ect-btn v5" onclick="setSubStarECT('sc-1','menu',5,this)">5</div><div class="ect-btn v6" onclick="setSubStarECT('sc-1','menu',6,this)">6</div><div class="ect-btn v7" onclick="setSubStarECT('sc-1','menu',7,this)">7</div><div class="ect-btn v8" onclick="setSubStarECT('sc-1','menu',8,this)">8</div><div class="ect-btn v9" onclick="setSubStarECT('sc-1','menu',9,this)">9</div><div class="ect-btn v10" onclick="setSubStarECT('sc-1','menu',10,this)">10</div></div>
               </div>
             </div>
             <textarea class="sc-obs" id="obs-sc-1" placeholder="Observaciones específicas de saludo y bienvenida…"></textarea>
@@ -1541,30 +1525,22 @@ body{background:var(--bg);font-family:'Morl',sans-serif;color:var(--text);displa
               <div class="rubrica-item">
                 <span class="rubrica-texto">Orden lógico y flujo correcto de la secuencia de servicio completa</span>
                 <span class="rubrica-peso">25%</span>
-                <div class="rubrica-stars" data-criterio="sc-2" data-sub="flujo">
-                  <span class="rubrica-star" onclick="setSubStar('sc-2','flujo',1,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-2','flujo',2,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-2','flujo',3,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-2','flujo',4,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-2','flujo',5,this)">★</span>
-                </div>
+                <div class="ect-row" data-criterio="sc-2" data-sub="flujo" style="max-width:200px"><div class="ect-btn v1" onclick="setSubStarECT('sc-2','flujo',1,this)">1</div><div class="ect-btn v2" onclick="setSubStarECT('sc-2','flujo',2,this)">2</div><div class="ect-btn v3" onclick="setSubStarECT('sc-2','flujo',3,this)">3</div><div class="ect-btn v4" onclick="setSubStarECT('sc-2','flujo',4,this)">4</div><div class="ect-btn v5" onclick="setSubStarECT('sc-2','flujo',5,this)">5</div><div class="ect-btn v6" onclick="setSubStarECT('sc-2','flujo',6,this)">6</div><div class="ect-btn v7" onclick="setSubStarECT('sc-2','flujo',7,this)">7</div><div class="ect-btn v8" onclick="setSubStarECT('sc-2','flujo',8,this)">8</div><div class="ect-btn v9" onclick="setSubStarECT('sc-2','flujo',9,this)">9</div><div class="ect-btn v10" onclick="setSubStarECT('sc-2','flujo',10,this)">10</div></div>
               </div>
               <div class="rubrica-item">
                 <span class="rubrica-texto">Timing y tiempos de entrega dentro de los estándares establecidos</span>
                 <span class="rubrica-peso">30%</span>
-                <div class="rubrica-stars" data-criterio="sc-2" data-sub="timing">
-                  <span class="rubrica-star" onclick="setSubStar('sc-2','timing',1,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-2','timing',2,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-2','timing',3,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-2','timing',4,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-2','timing',5,this)">★</span>
-                </div>
+                <div class="ect-row" data-criterio="sc-2" data-sub="timing" style="max-width:200px"><div class="ect-btn v1" onclick="setSubStarECT('sc-2','timing',1,this)">1</div><div class="ect-btn v2" onclick="setSubStarECT('sc-2','timing',2,this)">2</div><div class="ect-btn v3" onclick="setSubStarECT('sc-2','timing',3,this)">3</div><div class="ect-btn v4" onclick="setSubStarECT('sc-2','timing',4,this)">4</div><div class="ect-btn v5" onclick="setSubStarECT('sc-2','timing',5,this)">5</div><div class="ect-btn v6" onclick="setSubStarECT('sc-2','timing',6,this)">6</div><div class="ect-btn v7" onclick="setSubStarECT('sc-2','timing',7,this)">7</div><div class="ect-btn v8" onclick="setSubStarECT('sc-2','timing',8,this)">8</div><div class="ect-btn v9" onclick="setSubStarECT('sc-2','timing',9,this)">9</div><div class="ect-btn v10" onclick="setSubStarECT('sc-2','timing',10,this)">10</div></div>
               </div>
               <div class="rubrica-item">
                 <span class="rubrica-texto">Protocolo de servicio: por qué lado, postura, sincronización del equipo</span>
                 <span class="rubrica-peso">25%</span>
-                <div class="rubrica-stars" data-criterio="sc-2" data-sub="protocolo">
-                  <span class="rubrica-star" onclick="setSubStar('sc-2','protocolo',1,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-2','protocolo',2,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-2','protocolo',3,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-2','protocolo',4,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-2','protocolo',5,this)">★</span>
-                </div>
+                <div class="ect-row" data-criterio="sc-2" data-sub="protocolo" style="max-width:200px"><div class="ect-btn v1" onclick="setSubStarECT('sc-2','protocolo',1,this)">1</div><div class="ect-btn v2" onclick="setSubStarECT('sc-2','protocolo',2,this)">2</div><div class="ect-btn v3" onclick="setSubStarECT('sc-2','protocolo',3,this)">3</div><div class="ect-btn v4" onclick="setSubStarECT('sc-2','protocolo',4,this)">4</div><div class="ect-btn v5" onclick="setSubStarECT('sc-2','protocolo',5,this)">5</div><div class="ect-btn v6" onclick="setSubStarECT('sc-2','protocolo',6,this)">6</div><div class="ect-btn v7" onclick="setSubStarECT('sc-2','protocolo',7,this)">7</div><div class="ect-btn v8" onclick="setSubStarECT('sc-2','protocolo',8,this)">8</div><div class="ect-btn v9" onclick="setSubStarECT('sc-2','protocolo',9,this)">9</div><div class="ect-btn v10" onclick="setSubStarECT('sc-2','protocolo',10,this)">10</div></div>
               </div>
               <div class="rubrica-item">
                 <span class="rubrica-texto">Check-back y debarrizado con protocolo correcto y permiso verbal</span>
                 <span class="rubrica-peso">20%</span>
-                <div class="rubrica-stars" data-criterio="sc-2" data-sub="checkback">
-                  <span class="rubrica-star" onclick="setSubStar('sc-2','checkback',1,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-2','checkback',2,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-2','checkback',3,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-2','checkback',4,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-2','checkback',5,this)">★</span>
-                </div>
+                <div class="ect-row" data-criterio="sc-2" data-sub="checkback" style="max-width:200px"><div class="ect-btn v1" onclick="setSubStarECT('sc-2','checkback',1,this)">1</div><div class="ect-btn v2" onclick="setSubStarECT('sc-2','checkback',2,this)">2</div><div class="ect-btn v3" onclick="setSubStarECT('sc-2','checkback',3,this)">3</div><div class="ect-btn v4" onclick="setSubStarECT('sc-2','checkback',4,this)">4</div><div class="ect-btn v5" onclick="setSubStarECT('sc-2','checkback',5,this)">5</div><div class="ect-btn v6" onclick="setSubStarECT('sc-2','checkback',6,this)">6</div><div class="ect-btn v7" onclick="setSubStarECT('sc-2','checkback',7,this)">7</div><div class="ect-btn v8" onclick="setSubStarECT('sc-2','checkback',8,this)">8</div><div class="ect-btn v9" onclick="setSubStarECT('sc-2','checkback',9,this)">9</div><div class="ect-btn v10" onclick="setSubStarECT('sc-2','checkback',10,this)">10</div></div>
               </div>
             </div>
             <textarea class="sc-obs" id="obs-sc-2" placeholder="Observaciones sobre la secuencia de servicio…"></textarea>
@@ -1602,30 +1578,22 @@ body{background:var(--bg);font-family:'Morl',sans-serif;color:var(--text);displa
               <div class="rubrica-item">
                 <span class="rubrica-texto">Dominio de ingredientes, técnicas y descripción sensorial de platillos</span>
                 <span class="rubrica-peso">30%</span>
-                <div class="rubrica-stars" data-criterio="sc-3" data-sub="ingredientes">
-                  <span class="rubrica-star" onclick="setSubStar('sc-3','ingredientes',1,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-3','ingredientes',2,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-3','ingredientes',3,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-3','ingredientes',4,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-3','ingredientes',5,this)">★</span>
-                </div>
+                <div class="ect-row" data-criterio="sc-3" data-sub="ingredientes" style="max-width:200px"><div class="ect-btn v1" onclick="setSubStarECT('sc-3','ingredientes',1,this)">1</div><div class="ect-btn v2" onclick="setSubStarECT('sc-3','ingredientes',2,this)">2</div><div class="ect-btn v3" onclick="setSubStarECT('sc-3','ingredientes',3,this)">3</div><div class="ect-btn v4" onclick="setSubStarECT('sc-3','ingredientes',4,this)">4</div><div class="ect-btn v5" onclick="setSubStarECT('sc-3','ingredientes',5,this)">5</div><div class="ect-btn v6" onclick="setSubStarECT('sc-3','ingredientes',6,this)">6</div><div class="ect-btn v7" onclick="setSubStarECT('sc-3','ingredientes',7,this)">7</div><div class="ect-btn v8" onclick="setSubStarECT('sc-3','ingredientes',8,this)">8</div><div class="ect-btn v9" onclick="setSubStarECT('sc-3','ingredientes',9,this)">9</div><div class="ect-btn v10" onclick="setSubStarECT('sc-3','ingredientes',10,this)">10</div></div>
               </div>
               <div class="rubrica-item">
                 <span class="rubrica-texto">Manejo de alérgenos y restricciones dietéticas con seguridad y precisión</span>
                 <span class="rubrica-peso">30%</span>
-                <div class="rubrica-stars" data-criterio="sc-3" data-sub="alergenos">
-                  <span class="rubrica-star" onclick="setSubStar('sc-3','alergenos',1,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-3','alergenos',2,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-3','alergenos',3,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-3','alergenos',4,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-3','alergenos',5,this)">★</span>
-                </div>
+                <div class="ect-row" data-criterio="sc-3" data-sub="alergenos" style="max-width:200px"><div class="ect-btn v1" onclick="setSubStarECT('sc-3','alergenos',1,this)">1</div><div class="ect-btn v2" onclick="setSubStarECT('sc-3','alergenos',2,this)">2</div><div class="ect-btn v3" onclick="setSubStarECT('sc-3','alergenos',3,this)">3</div><div class="ect-btn v4" onclick="setSubStarECT('sc-3','alergenos',4,this)">4</div><div class="ect-btn v5" onclick="setSubStarECT('sc-3','alergenos',5,this)">5</div><div class="ect-btn v6" onclick="setSubStarECT('sc-3','alergenos',6,this)">6</div><div class="ect-btn v7" onclick="setSubStarECT('sc-3','alergenos',7,this)">7</div><div class="ect-btn v8" onclick="setSubStarECT('sc-3','alergenos',8,this)">8</div><div class="ect-btn v9" onclick="setSubStarECT('sc-3','alergenos',9,this)">9</div><div class="ect-btn v10" onclick="setSubStarECT('sc-3','alergenos',10,this)">10</div></div>
               </div>
               <div class="rubrica-item">
                 <span class="rubrica-texto">Conocimiento de maridaje y capacidad de recomendar con criterio</span>
                 <span class="rubrica-peso">20%</span>
-                <div class="rubrica-stars" data-criterio="sc-3" data-sub="maridaje">
-                  <span class="rubrica-star" onclick="setSubStar('sc-3','maridaje',1,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-3','maridaje',2,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-3','maridaje',3,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-3','maridaje',4,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-3','maridaje',5,this)">★</span>
-                </div>
+                <div class="ect-row" data-criterio="sc-3" data-sub="maridaje" style="max-width:200px"><div class="ect-btn v1" onclick="setSubStarECT('sc-3','maridaje',1,this)">1</div><div class="ect-btn v2" onclick="setSubStarECT('sc-3','maridaje',2,this)">2</div><div class="ect-btn v3" onclick="setSubStarECT('sc-3','maridaje',3,this)">3</div><div class="ect-btn v4" onclick="setSubStarECT('sc-3','maridaje',4,this)">4</div><div class="ect-btn v5" onclick="setSubStarECT('sc-3','maridaje',5,this)">5</div><div class="ect-btn v6" onclick="setSubStarECT('sc-3','maridaje',6,this)">6</div><div class="ect-btn v7" onclick="setSubStarECT('sc-3','maridaje',7,this)">7</div><div class="ect-btn v8" onclick="setSubStarECT('sc-3','maridaje',8,this)">8</div><div class="ect-btn v9" onclick="setSubStarECT('sc-3','maridaje',9,this)">9</div><div class="ect-btn v10" onclick="setSubStarECT('sc-3','maridaje',10,this)">10</div></div>
               </div>
               <div class="rubrica-item">
                 <span class="rubrica-texto">Conoce especiales, 86s y novedades del día sin consultar a cocina</span>
                 <span class="rubrica-peso">20%</span>
-                <div class="rubrica-stars" data-criterio="sc-3" data-sub="especiales">
-                  <span class="rubrica-star" onclick="setSubStar('sc-3','especiales',1,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-3','especiales',2,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-3','especiales',3,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-3','especiales',4,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-3','especiales',5,this)">★</span>
-                </div>
+                <div class="ect-row" data-criterio="sc-3" data-sub="especiales" style="max-width:200px"><div class="ect-btn v1" onclick="setSubStarECT('sc-3','especiales',1,this)">1</div><div class="ect-btn v2" onclick="setSubStarECT('sc-3','especiales',2,this)">2</div><div class="ect-btn v3" onclick="setSubStarECT('sc-3','especiales',3,this)">3</div><div class="ect-btn v4" onclick="setSubStarECT('sc-3','especiales',4,this)">4</div><div class="ect-btn v5" onclick="setSubStarECT('sc-3','especiales',5,this)">5</div><div class="ect-btn v6" onclick="setSubStarECT('sc-3','especiales',6,this)">6</div><div class="ect-btn v7" onclick="setSubStarECT('sc-3','especiales',7,this)">7</div><div class="ect-btn v8" onclick="setSubStarECT('sc-3','especiales',8,this)">8</div><div class="ect-btn v9" onclick="setSubStarECT('sc-3','especiales',9,this)">9</div><div class="ect-btn v10" onclick="setSubStarECT('sc-3','especiales',10,this)">10</div></div>
               </div>
             </div>
             <textarea class="sc-obs" id="obs-sc-3" placeholder="Observaciones sobre conocimiento de menú…"></textarea>
@@ -1663,30 +1631,22 @@ body{background:var(--bg);font-family:'Morl',sans-serif;color:var(--text);displa
               <div class="rubrica-item">
                 <span class="rubrica-texto">Anticipación de necesidades sin que el cliente solicite — servicio proactivo</span>
                 <span class="rubrica-peso">25%</span>
-                <div class="rubrica-stars" data-criterio="sc-4" data-sub="anticipacion">
-                  <span class="rubrica-star" onclick="setSubStar('sc-4','anticipacion',1,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-4','anticipacion',2,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-4','anticipacion',3,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-4','anticipacion',4,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-4','anticipacion',5,this)">★</span>
-                </div>
+                <div class="ect-row" data-criterio="sc-4" data-sub="anticipacion" style="max-width:200px"><div class="ect-btn v1" onclick="setSubStarECT('sc-4','anticipacion',1,this)">1</div><div class="ect-btn v2" onclick="setSubStarECT('sc-4','anticipacion',2,this)">2</div><div class="ect-btn v3" onclick="setSubStarECT('sc-4','anticipacion',3,this)">3</div><div class="ect-btn v4" onclick="setSubStarECT('sc-4','anticipacion',4,this)">4</div><div class="ect-btn v5" onclick="setSubStarECT('sc-4','anticipacion',5,this)">5</div><div class="ect-btn v6" onclick="setSubStarECT('sc-4','anticipacion',6,this)">6</div><div class="ect-btn v7" onclick="setSubStarECT('sc-4','anticipacion',7,this)">7</div><div class="ect-btn v8" onclick="setSubStarECT('sc-4','anticipacion',8,this)">8</div><div class="ect-btn v9" onclick="setSubStarECT('sc-4','anticipacion',9,this)">9</div><div class="ect-btn v10" onclick="setSubStarECT('sc-4','anticipacion',10,this)">10</div></div>
               </div>
               <div class="rubrica-item">
                 <span class="rubrica-texto">Manejo de quejas y objeciones con protocolo LAST — empático y resolutivo</span>
                 <span class="rubrica-peso">30%</span>
-                <div class="rubrica-stars" data-criterio="sc-4" data-sub="quejas">
-                  <span class="rubrica-star" onclick="setSubStar('sc-4','quejas',1,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-4','quejas',2,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-4','quejas',3,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-4','quejas',4,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-4','quejas',5,this)">★</span>
-                </div>
+                <div class="ect-row" data-criterio="sc-4" data-sub="quejas" style="max-width:200px"><div class="ect-btn v1" onclick="setSubStarECT('sc-4','quejas',1,this)">1</div><div class="ect-btn v2" onclick="setSubStarECT('sc-4','quejas',2,this)">2</div><div class="ect-btn v3" onclick="setSubStarECT('sc-4','quejas',3,this)">3</div><div class="ect-btn v4" onclick="setSubStarECT('sc-4','quejas',4,this)">4</div><div class="ect-btn v5" onclick="setSubStarECT('sc-4','quejas',5,this)">5</div><div class="ect-btn v6" onclick="setSubStarECT('sc-4','quejas',6,this)">6</div><div class="ect-btn v7" onclick="setSubStarECT('sc-4','quejas',7,this)">7</div><div class="ect-btn v8" onclick="setSubStarECT('sc-4','quejas',8,this)">8</div><div class="ect-btn v9" onclick="setSubStarECT('sc-4','quejas',9,this)">9</div><div class="ect-btn v10" onclick="setSubStarECT('sc-4','quejas',10,this)">10</div></div>
               </div>
               <div class="rubrica-item">
                 <span class="rubrica-texto">Cierre y despedida de calidad: verificación de satisfacción e invitación a regresar</span>
                 <span class="rubrica-peso">25%</span>
-                <div class="rubrica-stars" data-criterio="sc-4" data-sub="cierre">
-                  <span class="rubrica-star" onclick="setSubStar('sc-4','cierre',1,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-4','cierre',2,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-4','cierre',3,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-4','cierre',4,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-4','cierre',5,this)">★</span>
-                </div>
+                <div class="ect-row" data-criterio="sc-4" data-sub="cierre" style="max-width:200px"><div class="ect-btn v1" onclick="setSubStarECT('sc-4','cierre',1,this)">1</div><div class="ect-btn v2" onclick="setSubStarECT('sc-4','cierre',2,this)">2</div><div class="ect-btn v3" onclick="setSubStarECT('sc-4','cierre',3,this)">3</div><div class="ect-btn v4" onclick="setSubStarECT('sc-4','cierre',4,this)">4</div><div class="ect-btn v5" onclick="setSubStarECT('sc-4','cierre',5,this)">5</div><div class="ect-btn v6" onclick="setSubStarECT('sc-4','cierre',6,this)">6</div><div class="ect-btn v7" onclick="setSubStarECT('sc-4','cierre',7,this)">7</div><div class="ect-btn v8" onclick="setSubStarECT('sc-4','cierre',8,this)">8</div><div class="ect-btn v9" onclick="setSubStarECT('sc-4','cierre',9,this)">9</div><div class="ect-btn v10" onclick="setSubStarECT('sc-4','cierre',10,this)">10</div></div>
               </div>
               <div class="rubrica-item">
                 <span class="rubrica-texto">Personalización y detalles memorables: cumpleaños, preferencias, atenciones especiales</span>
                 <span class="rubrica-peso">20%</span>
-                <div class="rubrica-stars" data-criterio="sc-4" data-sub="personalizacion">
-                  <span class="rubrica-star" onclick="setSubStar('sc-4','personalizacion',1,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-4','personalizacion',2,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-4','personalizacion',3,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-4','personalizacion',4,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-4','personalizacion',5,this)">★</span>
-                </div>
+                <div class="ect-row" data-criterio="sc-4" data-sub="personalizacion" style="max-width:200px"><div class="ect-btn v1" onclick="setSubStarECT('sc-4','personalizacion',1,this)">1</div><div class="ect-btn v2" onclick="setSubStarECT('sc-4','personalizacion',2,this)">2</div><div class="ect-btn v3" onclick="setSubStarECT('sc-4','personalizacion',3,this)">3</div><div class="ect-btn v4" onclick="setSubStarECT('sc-4','personalizacion',4,this)">4</div><div class="ect-btn v5" onclick="setSubStarECT('sc-4','personalizacion',5,this)">5</div><div class="ect-btn v6" onclick="setSubStarECT('sc-4','personalizacion',6,this)">6</div><div class="ect-btn v7" onclick="setSubStarECT('sc-4','personalizacion',7,this)">7</div><div class="ect-btn v8" onclick="setSubStarECT('sc-4','personalizacion',8,this)">8</div><div class="ect-btn v9" onclick="setSubStarECT('sc-4','personalizacion',9,this)">9</div><div class="ect-btn v10" onclick="setSubStarECT('sc-4','personalizacion',10,this)">10</div></div>
               </div>
             </div>
             <textarea class="sc-obs" id="obs-sc-4" placeholder="Observaciones sobre atención integral al cliente…"></textarea>
@@ -1724,30 +1684,22 @@ body{background:var(--bg);font-family:'Morl',sans-serif;color:var(--text);displa
               <div class="rubrica-item">
                 <span class="rubrica-texto">Técnica de upselling: ofrece mejoras con argumentos sensoriales y contexto</span>
                 <span class="rubrica-peso">25%</span>
-                <div class="rubrica-stars" data-criterio="sc-5" data-sub="upselling">
-                  <span class="rubrica-star" onclick="setSubStar('sc-5','upselling',1,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-5','upselling',2,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-5','upselling',3,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-5','upselling',4,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-5','upselling',5,this)">★</span>
-                </div>
+                <div class="ect-row" data-criterio="sc-5" data-sub="upselling" style="max-width:200px"><div class="ect-btn v1" onclick="setSubStarECT('sc-5','upselling',1,this)">1</div><div class="ect-btn v2" onclick="setSubStarECT('sc-5','upselling',2,this)">2</div><div class="ect-btn v3" onclick="setSubStarECT('sc-5','upselling',3,this)">3</div><div class="ect-btn v4" onclick="setSubStarECT('sc-5','upselling',4,this)">4</div><div class="ect-btn v5" onclick="setSubStarECT('sc-5','upselling',5,this)">5</div><div class="ect-btn v6" onclick="setSubStarECT('sc-5','upselling',6,this)">6</div><div class="ect-btn v7" onclick="setSubStarECT('sc-5','upselling',7,this)">7</div><div class="ect-btn v8" onclick="setSubStarECT('sc-5','upselling',8,this)">8</div><div class="ect-btn v9" onclick="setSubStarECT('sc-5','upselling',9,this)">9</div><div class="ect-btn v10" onclick="setSubStarECT('sc-5','upselling',10,this)">10</div></div>
               </div>
               <div class="rubrica-item">
                 <span class="rubrica-texto">Cross-selling natural: complementos, maridaje y extras en el momento correcto</span>
                 <span class="rubrica-peso">25%</span>
-                <div class="rubrica-stars" data-criterio="sc-5" data-sub="crossselling">
-                  <span class="rubrica-star" onclick="setSubStar('sc-5','crossselling',1,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-5','crossselling',2,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-5','crossselling',3,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-5','crossselling',4,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-5','crossselling',5,this)">★</span>
-                </div>
+                <div class="ect-row" data-criterio="sc-5" data-sub="crossselling" style="max-width:200px"><div class="ect-btn v1" onclick="setSubStarECT('sc-5','crossselling',1,this)">1</div><div class="ect-btn v2" onclick="setSubStarECT('sc-5','crossselling',2,this)">2</div><div class="ect-btn v3" onclick="setSubStarECT('sc-5','crossselling',3,this)">3</div><div class="ect-btn v4" onclick="setSubStarECT('sc-5','crossselling',4,this)">4</div><div class="ect-btn v5" onclick="setSubStarECT('sc-5','crossselling',5,this)">5</div><div class="ect-btn v6" onclick="setSubStarECT('sc-5','crossselling',6,this)">6</div><div class="ect-btn v7" onclick="setSubStarECT('sc-5','crossselling',7,this)">7</div><div class="ect-btn v8" onclick="setSubStarECT('sc-5','crossselling',8,this)">8</div><div class="ect-btn v9" onclick="setSubStarECT('sc-5','crossselling',9,this)">9</div><div class="ect-btn v10" onclick="setSubStarECT('sc-5','crossselling',10,this)">10</div></div>
               </div>
               <div class="rubrica-item">
                 <span class="rubrica-texto">Oferta de postre y digestivo antes de presentar la cuenta — con descripción</span>
                 <span class="rubrica-peso">25%</span>
-                <div class="rubrica-stars" data-criterio="sc-5" data-sub="postre">
-                  <span class="rubrica-star" onclick="setSubStar('sc-5','postre',1,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-5','postre',2,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-5','postre',3,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-5','postre',4,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-5','postre',5,this)">★</span>
-                </div>
+                <div class="ect-row" data-criterio="sc-5" data-sub="postre" style="max-width:200px"><div class="ect-btn v1" onclick="setSubStarECT('sc-5','postre',1,this)">1</div><div class="ect-btn v2" onclick="setSubStarECT('sc-5','postre',2,this)">2</div><div class="ect-btn v3" onclick="setSubStarECT('sc-5','postre',3,this)">3</div><div class="ect-btn v4" onclick="setSubStarECT('sc-5','postre',4,this)">4</div><div class="ect-btn v5" onclick="setSubStarECT('sc-5','postre',5,this)">5</div><div class="ect-btn v6" onclick="setSubStarECT('sc-5','postre',6,this)">6</div><div class="ect-btn v7" onclick="setSubStarECT('sc-5','postre',7,this)">7</div><div class="ect-btn v8" onclick="setSubStarECT('sc-5','postre',8,this)">8</div><div class="ect-btn v9" onclick="setSubStarECT('sc-5','postre',9,this)">9</div><div class="ect-btn v10" onclick="setSubStarECT('sc-5','postre',10,this)">10</div></div>
               </div>
               <div class="rubrica-item">
                 <span class="rubrica-texto">Tono consultivo, sin presión, usando lenguaje de recomendación genuina</span>
                 <span class="rubrica-peso">25%</span>
-                <div class="rubrica-stars" data-criterio="sc-5" data-sub="tono">
-                  <span class="rubrica-star" onclick="setSubStar('sc-5','tono',1,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-5','tono',2,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-5','tono',3,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-5','tono',4,this)">★</span><span class="rubrica-star" onclick="setSubStar('sc-5','tono',5,this)">★</span>
-                </div>
+                <div class="ect-row" data-criterio="sc-5" data-sub="tono" style="max-width:200px"><div class="ect-btn v1" onclick="setSubStarECT('sc-5','tono',1,this)">1</div><div class="ect-btn v2" onclick="setSubStarECT('sc-5','tono',2,this)">2</div><div class="ect-btn v3" onclick="setSubStarECT('sc-5','tono',3,this)">3</div><div class="ect-btn v4" onclick="setSubStarECT('sc-5','tono',4,this)">4</div><div class="ect-btn v5" onclick="setSubStarECT('sc-5','tono',5,this)">5</div><div class="ect-btn v6" onclick="setSubStarECT('sc-5','tono',6,this)">6</div><div class="ect-btn v7" onclick="setSubStarECT('sc-5','tono',7,this)">7</div><div class="ect-btn v8" onclick="setSubStarECT('sc-5','tono',8,this)">8</div><div class="ect-btn v9" onclick="setSubStarECT('sc-5','tono',9,this)">9</div><div class="ect-btn v10" onclick="setSubStarECT('sc-5','tono',10,this)">10</div></div>
               </div>
             </div>
             <textarea class="sc-obs" id="obs-sc-5" placeholder="Observaciones sobre venta sugestiva y técnica comercial…"></textarea>
@@ -2235,6 +2187,14 @@ let cards=[], counter=0;
 function getNivelFromScore(p){return NIVELES_LIST.find(n=>p>=n.min&&p<n.max)||NIVELES_LIST[0];}
 function getLetraFromScore(p){if(p>=90)return'A+';if(p>=85)return'A';if(p>=80)return'B+';if(p>=70)return'B';if(p>=55)return'C';if(p>=40)return'D';return'F';}
 
+function getECTDescD(val){
+  if(val<=2)return{label:'Crítico',cls:'ect-critico'};
+  if(val<=4)return{label:'Deficiente',cls:'ect-deficiente'};
+  if(val<=6)return{label:'Estándar',cls:'ect-estandar'};
+  if(val<=8)return{label:'Bueno',cls:'ect-bueno'};
+  return{label:'Excelencia',cls:'ect-excelencia'};
+}
+
 function addCard(){
   counter++;
   const id='c'+Date.now();
@@ -2248,9 +2208,8 @@ function addCard(){
   const critRows=CRIT.map(c=>`
     <div class="criterio-row" data-crit="${c.key}">
       <span class="crit-label">${c.label}</span>
-      <div class="stars">${[1,2,3,4,5].map(i=>`<span class="star" onclick="setStar('${id}','${c.key}',${i})">&#9733;</span>`).join('')}</div>
-      <div class="score-bar-wrap"><div class="score-bar-fill" id="b-${id}-${c.key}" style="width:0"></div></div>
-      <span class="crit-score" id="s-${id}-${c.key}">—</span>
+      <div class="ect-row">${[1,2,3,4,5,6,7,8,9,10].map(i=>`<div class="ect-btn v${i}" onclick="setStarD('${id}','${c.key}',${i})">${i}</div>`).join('')}</div>
+      <div class="ect-desc" id="ed-${id}-${c.key}"></div>
     </div>`).join('');
   div.innerHTML=`
     <button class="btn-del" onclick="delCard('${id}')">&#215;</button>
@@ -2286,21 +2245,23 @@ function addCard(){
   updateGlobal();
 }
 
-function setStar(id,crit,val){
+function setStarD(id,crit,val){
   const d=cards.find(c=>c.id===id); if(!d)return;
   d.criterios[crit]=val;
   const card=document.getElementById(id);
   const row=card.querySelector(`.criterio-row[data-crit="${crit}"]`);
-  if(row) row.querySelectorAll('.star').forEach((s,i)=>s.classList.toggle('on',i<val));
-  const bar=document.getElementById(`b-${id}-${crit}`); if(bar) bar.style.width=(val*20)+'%';
-  const sc=document.getElementById(`s-${id}-${crit}`); if(sc) sc.textContent=val;
+  if(row) row.querySelectorAll('.ect-btn').forEach((b,i)=>b.classList.toggle('sel',i+1===val));
+  const ectEl=document.getElementById(`ed-${id}-${crit}`);
+  if(ectEl){const ect=getECTDescD(val);ectEl.textContent=ect.label;ectEl.className=`ect-desc ${ect.cls}`;}
   calcCard(d); updateGlobal();
 }
 
 function calcCard(d){
-  const vals=Object.values(d.criterios), sum=vals.reduce((a,b)=>a+b,0);
-  if(!sum)return;
-  const pct=Math.round((sum/(CRIT.length*5))*100);
+  const vals=Object.values(d.criterios).filter(v=>v>0);
+  if(!vals.length)return;
+  // ECT: promedio sobre 10 → score 0-100
+  const avg=vals.reduce((a,b)=>a+b,0)/CRIT.length;
+  const pct=Math.round(avg*10);
   const niv=getNivelFromScore(pct);
   d._pct=pct; d._nivel=niv.key;
   const nm=NIVELES_MAP[niv.key];
@@ -2353,6 +2314,23 @@ function updateGlobal(){
     row.innerHTML=`<span class="cs-name">${c.label}</span><div class="cs-bw"><div class="cs-bf" style="width:${pct}%"></div></div><span class="cs-val">${a5}</span>`;
     cl.appendChild(row);
   });
+
+  // Score preview visible
+  const prev = document.getElementById('global-preview');
+  const prevScore = document.getElementById('global-preview-score');
+  const prevNivel = document.getElementById('global-preview-nivel');
+  const prevLetra = document.getElementById('global-preview-letra');
+  if(ev.length && prev){
+    const avg=Math.round(ev.reduce((a,c)=>a+c._pct,0)/ev.length);
+    const niv=getNivelFromScore(avg);
+    const nm=NIVELES_MAP[niv.key];
+    prev.style.display='block';
+    if(prevScore){prevScore.textContent=avg;prevScore.style.color=nm.hex;}
+    if(prevNivel){prevNivel.textContent=nm.label;}
+    if(prevLetra){prevLetra.textContent=getLetraFromScore(avg);}
+  } else if(prev){
+    prev.style.display='none';
+  }
 }
 
 /* Captura fotográfica Zero-Trust */
@@ -3030,11 +3008,14 @@ function toggleCriterio(id) {
 /* Calificación de sub-rúbricas */
 function setSubStar(criterioId, subId, val, starEl) {
   salonScores[criterioId][subId] = val;
-  // Pintar estrellas del sub
+  // ECT: pintar botones 1-10
   const container = starEl.parentElement;
-  container.querySelectorAll('.rubrica-star').forEach((s, i) => s.classList.toggle('on', i < val));
+  container.querySelectorAll('.ect-btn').forEach((b, i) => b.classList.toggle('sel', i+1===val));
   // Calcular promedio del criterio
   calcCriterio(criterioId);
+}
+function setSubStarECT(criterioId, subId, val, el) {
+  setSubStar(criterioId, subId, val, el);
 }
 
 function calcCriterio(criterioId) {
@@ -3044,11 +3025,11 @@ function calcCriterio(criterioId) {
   const avg = vals.reduce((a,b)=>a+b,0) / vals.length;
   const rounded = Math.round(avg * 10) / 10;
 
-  // Actualizar ring
+  // ECT: escala 1-10 → 0-100
   const ring  = document.getElementById(`ring-${criterioId}`);
   const scoreEl = document.getElementById(`score-${criterioId}`);
   const card  = document.getElementById(criterioId);
-  const niv   = getNivel(rounded * 20); // escala 1-5 → 0-100
+  const niv   = getNivel(rounded * 10); // ECT 1-10 → 0-100
 
   if (scoreEl) scoreEl.textContent = rounded.toFixed(1);
   if (ring)   ring.style.borderColor = niv.color;
