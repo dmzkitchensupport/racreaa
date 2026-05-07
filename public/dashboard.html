@@ -797,25 +797,7 @@ body{background:var(--bg);font-family:'Morl',sans-serif;color:var(--text);displa
   text-align: right;
   flex-shrink: 0;
 }
-.rubrica-stars { display: flex; gap: 3px; flex-shrink: 0; }
-.rubrica-star {
-  font-size:15px;
-  cursor: pointer;
-  color: var(--border2);
-  transition: color .1s, transform .1s;
-  line-height: 1;
-  user-select: none;
-}
-.rubrica-star:hover { transform: scale(1.2); }
-.rubrica-star.on { color: var(--gold); }
-
-/* Indicadores expertos F&B */
-.indicadores {
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  padding: 10px 12px;
-  margin-bottom: 10px;
-}
+/* rubrica-star eliminado — reemplazado por ECT */
 .ind-label {
   font-size:11px;
   letter-spacing: 2px;
@@ -3198,7 +3180,7 @@ function limpiarSalon() {
       if (ring) ring.style.borderColor = '';
       const sn = document.getElementById(`score-${c.id}`);
       if (sn) sn.textContent = '—';
-      card.querySelectorAll('.rubrica-star').forEach(s => s.classList.remove('on'));
+      card.querySelectorAll('.ect-btn').forEach(b => b.classList.remove('sel'));
     }
     const obs = document.getElementById(`obs-${c.id}`);
     if (obs) obs.value = '';
