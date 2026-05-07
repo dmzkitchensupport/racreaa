@@ -1804,14 +1804,9 @@ function openSheet() {
   const ev = cardsM.filter(c=>c._pct!==undefined);
   if (!ev.length) { alert('Califica al menos un platillo antes de enviar.'); return; }
 
-  // ── VALIDACIÓN: todos los cronómetros deben estar detenidos ──
-  const sinCerrar = cardsM.filter(c => c._pct !== undefined && !platilloTimers[c.id]?.end);
-  if (sinCerrar.length) {
-    const nombres = sinCerrar.map(c => c.nombre || `Platillo ${c.num}`).join(', ');
-    alert(`⏱️ Cronómetro activo en: ${nombres}\n\nCalifica todos los criterios de cada platillo para cerrar el timer automáticamente.`);
-    return;
-  }
-
+  // ── TIMERS: cerrar automáticamente los que siguen abiertos ──
+  cardsM.filter(c => c._pct !== undefined && !platilloTimers[c.id]?.end)
+        .forEach(c => stampPlatilloEnd(c.id));
   const avg = Math.round(ev.reduce((a,c)=>a+c._pct,0)/ev.length);
   const nk = getNKey(avg); const nm = NMAP[nk];
 
@@ -2059,7 +2054,7 @@ async function submitFromSheet() {
         timerStart: platilloTimers[c.id]?.start?.toISOString() || null,
         timerEnd:   platilloTimers[c.id]?.end?.toISOString()   || null,
         evidence:(c.evidence||[]).map(e=>({id:e.id,base64:e.base64,mimeType:e.mimeType,sizeBytes:e.sizeBytes,
-          capturedAt:e.capturedAt||null,gps:e.gps||null,gpsVerified:e.gpsVerified||falseAt,gps:e.gps,gpsVerified:e.gpsVerified}))
+          capturedAt:e.capturedAt||null,gps:e.gps||null,gpsVerified:!!e.gpsVerified}))
       }))
     };
   } else {
