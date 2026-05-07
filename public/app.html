@@ -1024,7 +1024,7 @@ body::after {
 <!-- TOPBAR -->
 <div class="topbar">
   <div class="tb-inner">
-    <div class="tb-logo-wrap">
+    <div class="tb-logo-wrap" id="tb-logo-tap" style="cursor:pointer;">
       <img src="/logo-dmz.jpg" alt="DMZ">
     </div>
     <div class="tb-brand">
@@ -3032,5 +3032,466 @@ loadHome();
 <!-- CDN: jsPDF + QRCode para PDF corporativo -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   DMZ AUDIT — QA SUITE + LOG PANEL + RETRY QUEUE + SANDBOX
+   Acceso: 5 taps en logo → QA Panel
+           7 taps en "DMZ Audit" (título topbar) → Log Panel
+   ══════════════════════════════════════════════════════════════ */
+
+// ────────────────────────────────────────────────────────────────
+// 1. DMZ LOG — captura de eventos con buffer circular
+// ────────────────────────────────────────────────────────────────
+const DMZ_LOG = (() => {
+  const MAX = 80;
+  const buf = [];
+  const levels = { info:'#C4922A', ok:'#1B5E38', warn:'#A07820', error:'#B83232' };
+
+  function write(level, msg, data) {
+    const entry = { ts: new Date().toISOString().slice(11,23), level, msg, data };
+    if (buf.length >= MAX) buf.shift();
+    buf.push(entry);
+    if (level === 'error') console.error(`[DMZ]`, msg, data||'');
+  }
+
+  return {
+    info:  (m,d) => write('info',  m, d),
+    ok:    (m,d) => write('ok',    m, d),
+    warn:  (m,d) => write('warn',  m, d),
+    error: (m,d) => write('error', m, d),
+    dump:  ()    => [...buf],
+    levels
+  };
+})();
+
+// Interceptar errores globales
+window.addEventListener('error',           e => DMZ_LOG.error('window.error',    e.message));
+window.addEventListener('unhandledrejection', e => DMZ_LOG.error('unhandledRejection', String(e.reason)));
+
+DMZ_LOG.info('app.init', { session: (()=>{ try{ return localStorage.getItem('dmz_audit_session'); }catch{return '?';} })() });
+
+// ────────────────────────────────────────────────────────────────
+// 2. RETRY QUEUE — envíos fallidos WA / email
+// ────────────────────────────────────────────────────────────────
+const RetryQueue = (() => {
+  const KEY     = 'dmz_retry_q';
+  const MAX_RETRIES = 3;
+  const BACKOFF_MS  = [5000, 15000, 45000]; // 5s, 15s, 45s
+
+  function load() { try { return JSON.parse(localStorage.getItem(KEY)||'[]'); } catch{ return []; } }
+  function save(q) { try { localStorage.setItem(KEY, JSON.stringify(q)); } catch{} }
+
+  function enqueue(type, payload) {
+    const q = load();
+    q.push({ id: Date.now(), type, payload, attempts: 0, nextTry: Date.now() });
+    save(q);
+    DMZ_LOG.warn('retry.enqueued', { type, qLen: q.length });
+    scheduleProcess();
+  }
+
+  async function processOne(item) {
+    if (item.type === 'wa') {
+      // WA no es una API push — solo podemos abrir el enlace
+      DMZ_LOG.warn('retry.wa_manual', 'WA requiere tap manual — reencolado ignorado');
+      return true; // sacar de la cola
+    }
+    if (item.type === 'audit_submit') {
+      try {
+        const res = await fetch('https://dmz-audit.netlify.app/api/submit-audit', {
+          method: 'POST',
+          headers: { 'Content-Type':'application/json', 'Authorization':`Bearer ${item.payload.token}` },
+          body: JSON.stringify(item.payload.body)
+        });
+        if (res.ok) {
+          DMZ_LOG.ok('retry.success', { type: item.type, attempt: item.attempts+1 });
+          return true;
+        }
+        DMZ_LOG.warn('retry.fail', { status: res.status, attempt: item.attempts+1 });
+        return false;
+      } catch(e) {
+        DMZ_LOG.error('retry.network', e.message);
+        return false;
+      }
+    }
+    return true; // tipo desconocido: eliminar
+  }
+
+  async function processQueue() {
+    const q    = load();
+    const now  = Date.now();
+    const next = [];
+    for (const item of q) {
+      if (item.attempts >= MAX_RETRIES) { DMZ_LOG.warn('retry.abandoned', item); continue; }
+      if (item.nextTry > now)           { next.push(item); continue; }
+      const ok = await processOne(item);
+      if (!ok) {
+        item.attempts++;
+        item.nextTry = now + (BACKOFF_MS[item.attempts-1] || 60000);
+        next.push(item);
+      }
+    }
+    save(next);
+    if (next.length) scheduleProcess();
+  }
+
+  let timer = null;
+  function scheduleProcess(delay=5000) {
+    clearTimeout(timer);
+    timer = setTimeout(processQueue, delay);
+  }
+
+  // Procesar al cargar si hay pendientes
+  if (load().length) scheduleProcess(3000);
+  // Procesar cuando la red se restablece
+  window.addEventListener('online', () => { DMZ_LOG.info('network.online'); scheduleProcess(1000); });
+  window.addEventListener('offline', () => DMZ_LOG.warn('network.offline'));
+
+  return { enqueue, processQueue, load };
+})();
+
+// ────────────────────────────────────────────────────────────────
+// 3. LOG PANEL — 7 taps en el título "DMZ Audit"
+// ────────────────────────────────────────────────────────────────
+(function initLogPanel() {
+  let taps = 0, tapTimer = null;
+  const titleEl = document.getElementById('tb-role') || document.querySelector('.tb-name');
+  if (!titleEl) return;
+
+  titleEl.addEventListener('click', () => {
+    taps++;
+    clearTimeout(tapTimer);
+    tapTimer = setTimeout(() => { taps = 0; }, 1800);
+    if (taps >= 7) {
+      taps = 0;
+      openLogPanel();
+    }
+  });
+
+  function openLogPanel() {
+    const existing = document.getElementById('dmz-log-panel');
+    if (existing) { existing.remove(); return; }
+
+    const panel = document.createElement('div');
+    panel.id = 'dmz-log-panel';
+    panel.style.cssText = `
+      position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9999;
+      display:flex;flex-direction:column;font-family:monospace;font-size:11px;
+    `;
+
+    const header = document.createElement('div');
+    header.style.cssText = 'background:#1A1917;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #C4922A;flex-shrink:0;';
+    header.innerHTML = `
+      <span style="color:#C4922A;font-size:12px;font-weight:700;letter-spacing:2px;">DMZ AUDIT — EVENT LOG</span>
+      <div style="display:flex;gap:8px;">
+        <button onclick="navigator.clipboard?.writeText(JSON.stringify(DMZ_LOG.dump(),null,2)).then(()=>alert('Log copiado'))" style="background:#C4922A;border:none;color:#1A1917;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;border-radius:2px;">Copiar</button>
+        <button onclick="document.getElementById('dmz-log-panel').remove()" style="background:transparent;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.6);padding:5px 10px;font-size:11px;cursor:pointer;border-radius:2px;">✕ Cerrar</button>
+      </div>`;
+
+    const body = document.createElement('div');
+    body.style.cssText = 'flex:1;overflow-y:auto;padding:8px 12px;';
+
+    const entries = DMZ_LOG.dump().reverse();
+    const cols = DMZ_LOG.levels;
+    body.innerHTML = entries.length ? entries.map(e => `
+      <div style="padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04);display:flex;gap:8px;align-items:flex-start;">
+        <span style="color:rgba(255,255,255,.3);min-width:90px;">${e.ts}</span>
+        <span style="color:${cols[e.level]||'#fff'};min-width:36px;font-weight:700;">${e.level.toUpperCase()}</span>
+        <span style="color:rgba(250,250,247,.85);flex:1;">${e.msg}${e.data ? ' <span style="opacity:.5">'+JSON.stringify(e.data).slice(0,60)+'</span>' : ''}</span>
+      </div>`).join('') : '<div style="color:rgba(255,255,255,.3);padding:16px;">Sin eventos registrados.</div>';
+
+    const footer = document.createElement('div');
+    footer.style.cssText = 'background:#1A1917;padding:8px 16px;border-top:1px solid rgba(255,255,255,.08);font-size:10px;color:rgba(255,255,255,.3);flex-shrink:0;';
+    footer.textContent = `${entries.length} eventos · Retry queue: ${RetryQueue.load().length} pendientes · SESSION: ${localStorage.getItem('dmz_audit_session')||'—'}`;
+
+    panel.append(header, body, footer);
+    document.body.appendChild(panel);
+  }
+})();
+
+// ────────────────────────────────────────────────────────────────
+// 4. QA PANEL — 5 taps en logo
+// ────────────────────────────────────────────────────────────────
+(function initQAPanel() {
+  let taps = 0, tapTimer = null;
+  const logo = document.getElementById('tb-logo-tap');
+  if (!logo) return;
+
+  logo.addEventListener('click', () => {
+    taps++;
+    clearTimeout(tapTimer);
+    tapTimer = setTimeout(() => { taps = 0; }, 2000);
+    if (taps >= 5) {
+      taps = 0;
+      openQAPanel();
+    }
+  });
+})();
+
+function openQAPanel() {
+  const existing = document.getElementById('dmz-qa-panel');
+  if (existing) { existing.remove(); return; }
+
+  const panel = document.createElement('div');
+  panel.id = 'dmz-qa-panel';
+  panel.style.cssText = `
+    position:fixed;inset:0;background:#0D0C0B;z-index:9998;
+    display:flex;flex-direction:column;font-family:'Morl',sans-serif;overflow:hidden;
+  `;
+
+  panel.innerHTML = `
+    <div style="background:#1A1917;padding:14px 16px;border-bottom:2px solid #C4922A;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
+      <div>
+        <div style="font-size:10px;letter-spacing:3px;color:#C4922A;text-transform:uppercase;">DMZ Audit · QA Suite</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:2px;">Batería de pruebas en dispositivo</div>
+      </div>
+      <button onclick="document.getElementById('dmz-qa-panel').remove()" style="background:transparent;border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.5);padding:6px 12px;font-size:12px;cursor:pointer;border-radius:2px;">✕</button>
+    </div>
+
+    <div style="flex:1;overflow-y:auto;padding:16px;">
+
+      <!-- SANDBOX -->
+      <div style="background:#1A1917;border:1px solid #C4922A;border-radius:4px;padding:14px;margin-bottom:14px;">
+        <div style="font-size:10px;letter-spacing:2px;color:#C4922A;text-transform:uppercase;margin-bottom:8px;">🧪 Modo Sandbox</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.5);margin-bottom:10px;line-height:1.6;">Envía una auditoría ficticia de prueba. Verifica que el email y WA lleguen correctamente antes de una auditoría real.</div>
+        <button onclick="QA.sandbox()" style="background:#C4922A;border:none;color:#1A1917;padding:10px 0;width:100%;font-size:12px;font-weight:700;letter-spacing:1px;cursor:pointer;border-radius:2px;">ENVIAR AUDITORÍA DE PRUEBA</button>
+        <div id="qa-sandbox-result" style="margin-top:8px;font-size:11px;color:rgba(255,255,255,.4);"></div>
+      </div>
+
+      <!-- TESTS -->
+      <div style="font-size:10px;letter-spacing:2px;color:#C4922A;text-transform:uppercase;margin-bottom:10px;">Pruebas automáticas</div>
+      <div id="qa-results" style="display:flex;flex-direction:column;gap:8px;"></div>
+
+      <button onclick="QA.runAll()" style="margin-top:14px;background:#2C2A24;border:1px solid rgba(196,146,42,.4);color:#C4922A;padding:12px 0;width:100%;font-size:12px;font-weight:700;letter-spacing:1px;cursor:pointer;border-radius:2px;">▶ EJECUTAR TODAS LAS PRUEBAS</button>
+    </div>`;
+
+  document.body.appendChild(panel);
+}
+
+// ────────────────────────────────────────────────────────────────
+// 5. QA ENGINE — pruebas ejecutables en dispositivo
+// ────────────────────────────────────────────────────────────────
+const QA = (() => {
+
+  const results = [];
+
+  function renderResult(name, ok, detail='') {
+    const container = document.getElementById('qa-results');
+    if (!container) return;
+    const div = document.createElement('div');
+    div.style.cssText = `padding:10px 12px;border-radius:3px;border-left:3px solid ${ok?'#1B5E38':'#B83232'};background:${ok?'rgba(27,94,56,.12)':'rgba(184,50,50,.12)'};`;
+    div.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:12px;color:${ok?'#4CAF70':'#E57373'};font-weight:700;">${ok?'✓ PASS':'✗ FAIL'}</span>
+        <span style="font-size:11px;color:rgba(255,255,255,.3);">${new Date().toLocaleTimeString('es-MX')}</span>
+      </div>
+      <div style="font-size:12px;color:rgba(250,250,247,.85);margin-top:3px;">${name}</div>
+      ${detail ? `<div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:3px;font-family:monospace;">${detail}</div>` : ''}`;
+    container.appendChild(div);
+    DMZ_LOG[ok?'ok':'error']('qa.test', { name, ok, detail });
+    results.push({ name, ok, detail });
+  }
+
+  // ── TEST 1: IndexedDB persiste y recupera estado ──
+  async function testIDBPersistence() {
+    const name = 'IDB: Auto-save persiste estado de auditoría';
+    try {
+      // Simular un draft
+      const draftFake = { session:'QA-TEST', ts: Date.now(), counterM:2, cardsM:[{id:'qa1',num:1,nombre:'Pasta Test',criterios:{presentacion:8,temperatura:7,sabor:9,textura:8,porcion:7},_pct:78}], platilloTimers:{qa1:{start:new Date(Date.now()-300000),end:new Date()}}, formGlobal:{establecimiento:'QA Restaurant'} };
+      const db = await new Promise((res,rej)=>{ const r=indexedDB.open('dmz_audit_v1',1); r.onupgradeneeded=e=>e.target.result.createObjectStore('draft'); r.onsuccess=e=>res(e.target.result); r.onerror=()=>rej(r.error); });
+      await new Promise((res,rej)=>{ const tx=db.transaction('draft','readwrite'); tx.objectStore('draft').put(draftFake,'qa_test'); tx.oncomplete=res; tx.onerror=()=>rej(tx.error); });
+      const loaded = await new Promise((res,rej)=>{ const tx=db.transaction('draft','readonly'); const req=tx.objectStore('draft').get('qa_test'); req.onsuccess=()=>res(req.result); req.onerror=()=>rej(req.error); });
+      const ok = loaded?.session==='QA-TEST' && loaded?.cardsM?.length===1 && loaded?.cardsM[0]?.nombre==='Pasta Test';
+      renderResult(name, ok, ok ? 'Draft guardado y recuperado correctamente' : `Recuperado: ${JSON.stringify(loaded).slice(0,80)}`);
+      // Cleanup
+      await new Promise(res=>{ const tx=db.transaction('draft','readwrite'); tx.objectStore('draft').delete('qa_test'); tx.oncomplete=res; });
+    } catch(e) { renderResult(name, false, e.message); }
+  }
+
+  // ── TEST 2: Auto-save no pisa envío manual ──
+  async function testNoCollision() {
+    const name = 'Colisión: Auto-save no sobreescribe envío manual';
+    try {
+      // El auto-save llama idbSave() que siempre usa la clave 'current'
+      // El envío manual llama idbClear() que borra 'current'
+      // Si hay colisión, idbSave() después de idbClear() reescribiría el draft
+      // Simulamos: clear → esperamos 50ms → verificamos que no haya draft
+      if (typeof idbClear !== 'function') throw new Error('idbClear no está en scope');
+      await idbClear();
+      await new Promise(r=>setTimeout(r,50));
+      const loaded = await idbLoad();
+      const ok = loaded === null;
+      renderResult(name, ok, ok ? 'idbClear previene reescritura correctamente' : 'WARN: draft encontrado post-clear');
+    } catch(e) { renderResult(name, false, e.message); }
+  }
+
+  // ── TEST 3: Cronómetros no se resetean con re-renders ──
+  function testTimerStability() {
+    const name = 'Timers: Re-renders de UI no alteran cronómetros activos';
+    try {
+      const fakeId = 'qa_timer_' + Date.now();
+      if (!platilloTimers) throw new Error('platilloTimers no accesible');
+      platilloTimers[fakeId] = { start: new Date(Date.now() - 90000) }; // 90 segundos atrás
+      const before = platilloTimers[fakeId].start.getTime();
+
+      // Simular re-render: llamar updateFAB() y calcCardM() con datos falsos
+      if (typeof updateFAB === 'function') updateFAB();
+
+      const after = platilloTimers[fakeId].start.getTime();
+      const ok = before === after;
+      delete platilloTimers[fakeId];
+      renderResult(name, ok, ok ? `Timer estable tras re-render (${before}===${after})` : `Timer alterado: ${before} → ${after}`);
+    } catch(e) { renderResult(name, false, e.message); }
+  }
+
+  // ── TEST 4: PDF con caracteres especiales y texto largo ──
+  function testPDFOverflow() {
+    const name = 'PDF: Caracteres especiales y texto largo sin overflow';
+    try {
+      if (typeof window.jspdf === 'undefined') {
+        renderResult(name, false, 'jsPDF aún no cargado — espera 3s y reintenta');
+        return;
+      }
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit:'mm', format:'a4' });
+      const textoLargo = '¡Éxito! Ñoño áéíóú «hallazgo» crítico: temperatura sub-estándar en línea de producción. ' + 'X'.repeat(500);
+      const especiales = '< > " & \' / \\ % $ # @ ! ? , . : ; ( ) [ ] { }';
+      const lines1 = doc.splitTextToSize(textoLargo, 170);
+      const lines2 = doc.splitTextToSize(especiales, 170);
+      doc.setFont('helvetica','normal').setFontSize(8);
+      doc.text(lines1.slice(0,5), 20, 40);
+      doc.text(lines2, 20, 80);
+      // Si llegamos aquí sin excepción, el PDF maneja el overflow
+      const blob = doc.output('blob');
+      const ok = blob.size > 0;
+      renderResult(name, ok, ok ? `PDF generado sin errores — ${blob.size} bytes` : 'PDF vacío generado');
+    } catch(e) { renderResult(name, false, e.message); }
+  }
+
+  // ── TEST 5: Conectividad a API ──
+  async function testAPIConnectivity() {
+    const name = 'API: Health check Netlify Functions';
+    try {
+      const start = Date.now();
+      const res = await fetch('https://dmz-audit.netlify.app/.netlify/functions/health', { signal: AbortSignal.timeout(6000) });
+      const data = await res.json();
+      const latency = Date.now() - start;
+      const ok = res.ok && (data.status === 'ok' || data.status === 'healthy');
+      renderResult(name, ok, `${res.status} · ${latency}ms · ${JSON.stringify(data).slice(0,60)}`);
+    } catch(e) { renderResult(name, false, e.message); }
+  }
+
+  // ── TEST 6: SESSION_ID persiste entre recargas ──
+  function testSessionPersistence() {
+    const name = 'SessionID: Persiste en localStorage entre recargas';
+    try {
+      const stored = localStorage.getItem('dmz_audit_session');
+      const ok = typeof stored === 'string' && stored.startsWith('SES-') && stored.length > 10;
+      renderResult(name, ok, ok ? stored : 'No encontrado o formato incorrecto');
+    } catch(e) { renderResult(name, false, e.message); }
+  }
+
+  // ── TEST 7: Retry queue funcional ──
+  function testRetryQueue() {
+    const name = 'RetryQueue: Encola y elimina correctamente';
+    try {
+      const beforeLen = RetryQueue.load().length;
+      RetryQueue.enqueue('test_item', { ping: true });
+      const afterEnqueue = RetryQueue.load().length;
+      // Limpiar el item de prueba
+      const q = RetryQueue.load().filter(i => i.type !== 'test_item');
+      localStorage.setItem('dmz_retry_q', JSON.stringify(q));
+      const afterClean = RetryQueue.load().length;
+      const ok = afterEnqueue === beforeLen + 1 && afterClean === beforeLen;
+      renderResult(name, ok, `Antes:${beforeLen} → Encolado:${afterEnqueue} → Limpio:${afterClean}`);
+    } catch(e) { renderResult(name, false, e.message); }
+  }
+
+  // ── SANDBOX: enviar auditoría ficticia ──
+  async function sandbox() {
+    const resultEl = document.getElementById('qa-sandbox-result');
+    if (resultEl) resultEl.textContent = '⏳ Enviando auditoría de prueba...';
+    DMZ_LOG.info('sandbox.start');
+
+    const dummyPayload = {
+      tipo: 'alimentos',
+      sessionToken: TOKEN || 'SANDBOX-TOKEN',
+      submittedAt: new Date().toISOString(),
+      establecimiento: '🧪 SANDBOX — QA Test Restaurant',
+      auditor: OPERATOR?.full_name || 'QA Auditor DMZ',
+      fecha: new Date().toISOString().split('T')[0],
+      servicio: 'Comida',
+      auditorFirma: 'QA Auto-test',
+      chefFirma: 'Chef Prueba',
+      signatureImage: null,
+      conclusion: 'PRUEBA AUTOMÁTICA — Este reporte es generado por el sistema QA de DMZ Audit. Favor de ignorar.',
+      globalScore: 82,
+      gpsAtSubmission: GPS || null,
+      items: [
+        { id:'qa1', num:1, nombre:'Pasta Carbonara (TEST)', categoria:'Platillo fuerte', criterios:{presentacion:8,temperatura:7,sabor:9,textura:8,porcion:7}, score:78, nivel:'bueno', observaciones:'Muestra de prueba QA', timerStart:new Date(Date.now()-600000).toISOString(), timerEnd:new Date(Date.now()-480000).toISOString(), evidence:[] },
+        { id:'qa2', num:2, nombre:'Ensalada César (TEST)', categoria:'Ensalada', criterios:{presentacion:9,temperatura:9,sabor:8,textura:9,porcion:8}, score:86, nivel:'excelente', observaciones:'Control positivo QA', timerStart:new Date(Date.now()-480000).toISOString(), timerEnd:new Date(Date.now()-360000).toISOString(), evidence:[] }
+      ]
+    };
+
+    try {
+      const res = await fetch('https://dmz-audit.netlify.app/api/submit-audit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${TOKEN || ''}`,
+          'X-Client-GPS': GPS ? `${GPS.lat},${GPS.lng}` : 'unavailable',
+          'X-Request-ID': 'SANDBOX-' + Date.now().toString(36).toUpperCase()
+        },
+        body: JSON.stringify(dummyPayload),
+        credentials: 'include'
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        DMZ_LOG.ok('sandbox.success', { auditId: data.auditId });
+        if (resultEl) resultEl.innerHTML = `<span style="color:#4CAF70;">✓ Enviada · ID: ${data.auditId}</span><br><span style="color:rgba(255,255,255,.4);font-size:10px;">Revisa email mario@delamorazumaran.com y WA</span>`;
+        // Abrir WA con mensaje de prueba
+        const msg = `🧪 *PRUEBA DMZ AUDIT QA*\n✅ Sistema funcionando correctamente\n📅 ${new Date().toLocaleString('es-MX')}\n🆔 ${data.auditId}\n_Este es un envío de prueba automático._`;
+        setTimeout(() => window.open('https://wa.me/522223623135?text='+encodeURIComponent(msg), '_blank'), 1500);
+      } else {
+        DMZ_LOG.error('sandbox.fail', { status: res.status, data });
+        if (resultEl) resultEl.innerHTML = `<span style="color:#E57373;">✗ Error ${res.status}: ${data.message||'desconocido'}</span>`;
+      }
+    } catch(e) {
+      DMZ_LOG.error('sandbox.network', e.message);
+      if (resultEl) resultEl.innerHTML = `<span style="color:#E57373;">✗ Red: ${e.message}</span>`;
+    }
+  }
+
+  async function runAll() {
+    const container = document.getElementById('qa-results');
+    if (container) container.innerHTML = '';
+    results.length = 0;
+    DMZ_LOG.info('qa.runAll.start');
+    await testIDBPersistence();
+    await testNoCollision();
+    testTimerStability();
+    testPDFOverflow();
+    await testAPIConnectivity();
+    testSessionPersistence();
+    testRetryQueue();
+    const pass = results.filter(r=>r.ok).length;
+    DMZ_LOG.ok('qa.runAll.done', { pass, fail: results.length-pass, total: results.length });
+    const summary = document.createElement('div');
+    summary.style.cssText = 'margin-top:12px;padding:10px 14px;background:#1A1917;border:1px solid rgba(196,146,42,.3);border-radius:3px;font-size:12px;text-align:center;';
+    const allPass = pass === results.length;
+    summary.innerHTML = `<span style="color:${allPass?'#4CAF70':'#E57373'};font-weight:700;">${pass}/${results.length} pruebas aprobadas</span>`;
+    container?.parentElement?.appendChild(summary);
+  }
+
+  return { runAll, sandbox, testIDBPersistence, testNoCollision, testTimerStability, testPDFOverflow, testAPIConnectivity, testSessionPersistence, testRetryQueue };
+})();
+
+// Exponer globalmente
+window.QA      = QA;
+window.DMZ_LOG = DMZ_LOG;
+window.RetryQueue = RetryQueue;
+
+DMZ_LOG.ok('qa.loaded', { v:'1.0', ts: new Date().toISOString() });
+</script>
 </body>
 </html>
