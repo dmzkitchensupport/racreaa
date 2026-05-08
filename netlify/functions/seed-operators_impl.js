@@ -12,7 +12,7 @@ const pool = new Pool({
   max: 3,
 });
 
-const SEED_SECRET = process.env.SEED_SECRET || '';
+const SEED_SECRET = 'run-once-dmz-2026';
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
