@@ -1124,7 +1124,8 @@ const opRaw = sessionStorage.getItem('racreaa_op');
 const tenRaw = sessionStorage.getItem('racreaa_tenant');
 if (!at) { window.location.href = '/login.html'; }
 
-const TOKEN = at;
+let _token = at;
+function getToken() { return sessionStorage.getItem('racreaa_at') || _token; }
 const OPERATOR = opRaw ? JSON.parse(opRaw) : { full_name:'Auditor', role:'auditor' };
 const TENANT   = tenRaw ? JSON.parse(tenRaw) : { slug:'dmz' };
 
@@ -1194,7 +1195,7 @@ function getNivel(s){ return NMAP[getNKey(s)]; }
 /* ── LOAD HOME ── */
 async function loadHome() {
   try {
-    const res = await fetch(`https://dmz-audit.netlify.app/api/audits?tenant=${TENANT.slug}&limit=5`, { headers:{ 'Authorization':`Bearer ${TOKEN}` } });
+    const res = await fetch(`https://dmz-audit.netlify.app/api/audits?tenant=${TENANT.slug}&limit=5`, { headers:{ 'Authorization':`Bearer ${getToken()}` } });
     const data = await res.json();
     const audits = data.audits || [];
     document.getElementById('h-total').textContent = data.total || 0;
@@ -1229,7 +1230,7 @@ async function loadHist() {
   const el = document.getElementById('hist-list');
   el.innerHTML = '<div class="spinner-m"></div>';
   try {
-    const res = await fetch(`https://dmz-audit.netlify.app/api/audits?tenant=${TENANT.slug}&limit=50`, { headers:{ 'Authorization':`Bearer ${TOKEN}` } });
+    const res = await fetch(`https://dmz-audit.netlify.app/api/audits?tenant=${TENANT.slug}&limit=50`, { headers:{ 'Authorization':`Bearer ${getToken()}` } });
     const data = await res.json();
     const audits = data.audits || [];
     if (!audits.length) { el.innerHTML = '<div style="text-align:center;color:var(--text3);padding:32px;font-size:13px;">Sin evaluaciones registradas.</div>'; return; }
@@ -1592,7 +1593,7 @@ async function submitFromSheet() {
     const ev = cardsM.filter(c=>c._pct!==undefined);
     const avg = Math.round(ev.reduce((a,c)=>a+c._pct,0)/ev.length);
     payload = {
-      tipo:'alimentos', sessionToken:TOKEN, submittedAt:new Date().toISOString(), gpsAtSubmission:GPS,
+      tipo:'alimentos', sessionToken:getToken(), submittedAt:new Date().toISOString(), gpsAtSubmission:GPS,
       establecimiento: document.getElementById('a-est').value.trim(),
       auditor:         document.getElementById('a-aud').value.trim(),
       fecha:           document.getElementById('a-fecha').value,
@@ -1613,7 +1614,7 @@ async function submitFromSheet() {
     // salón
     const avg = calcSalonAvg();
     payload = {
-      tipo:'salon', sessionToken:TOKEN, submittedAt:new Date().toISOString(), gpsAtSubmission:GPS,
+      tipo:'salon', sessionToken:getToken(), submittedAt:new Date().toISOString(), gpsAtSubmission:GPS,
       establecimiento: document.getElementById('s-est-m').value.trim(),
       auditor:         auditor,
       fecha:           new Date().toISOString().split('T')[0],
@@ -1633,7 +1634,7 @@ async function submitFromSheet() {
   try {
     const res = await fetch('https://dmz-audit.netlify.app/api/submit-audit', {
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':`Bearer ${TOKEN}`,
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${getToken()}`,
         'X-Client-GPS':GPS?`${GPS.lat},${GPS.lng}`:'unavailable',
         'X-Request-ID':'APP-'+Date.now().toString(36).toUpperCase()},
       body: JSON.stringify(payload),
@@ -1773,7 +1774,7 @@ function tickTimerM(){
 /* ── LOGOUT ── */
 function logout(){
   if(!confirm('¿Cerrar sesión?'))return;
-  fetch('https://dmz-audit.netlify.app/api/auth-logout',{method:'POST',credentials:'include',headers:{'Authorization':`Bearer ${TOKEN}`,'Content-Type':'application/json'},body:JSON.stringify({all_devices:false})})
+  fetch('https://dmz-audit.netlify.app/api/auth-logout',{method:'POST',credentials:'include',headers:{'Authorization':`Bearer ${getToken()}`,'Content-Type':'application/json'},body:JSON.stringify({all_devices:false})})
     .finally(()=>{sessionStorage.clear();window.location.href='/login.html';});
 }
 
