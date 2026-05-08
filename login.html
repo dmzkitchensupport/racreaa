@@ -586,9 +586,9 @@ async function doLogin() {
         if (data.must_change_password) {
           window.location.href = '/set-password?token=change&email=' + encodeURIComponent(data.operator.email);
         } else if (role === 'admin' || role === 'supervisor') {
-          window.location.href = '/dashboard.html?v=20260508';
+          window.location.href = '/panel.html';
         } else {
-          window.location.href = '/app.html?v=20260508';
+          window.location.href = '/auditoria.html';
         }
       }, 800);
 
