@@ -502,7 +502,28 @@ body{background:var(--bg);font-family:'Morl',sans-serif;color:var(--text);displa
 .platillo-card[data-nivel="regular"]{border-left-color:var(--yellow);}
 .platillo-card[data-nivel="deficiente"]{border-left-color:var(--orange);}
 .platillo-card[data-nivel="critico"]{border-left-color:var(--red);}
-.card-top{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;}
+.card-timer {
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(0,0,0,.15); border-radius: 3px;
+  padding: 8px 12px; margin: 8px 0;
+  border-left: 3px solid rgba(255,255,255,.1);
+  transition: border-color .4s;
+}
+.card-timer.sem-ok   { border-left-color: #1B5E38; }
+.card-timer.sem-warn { border-left-color: #A07820; }
+.card-timer.sem-late { border-left-color: #B83232; }
+.ct-display { font-family:'Morl',sans-serif; font-weight:900; font-size:20px; min-width:52px; color:rgba(255,255,255,.4); }
+.ct-display.running { color: var(--gold); }
+.ct-label { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:rgba(255,255,255,.3); flex:1; }
+.ct-btn {
+  font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase;
+  padding:5px 10px; border-radius:2px; cursor:pointer; border:none;
+  transition: all .15s; -webkit-user-select:none;
+}
+.ct-btn-start { background:#1B5E38; color:#fff; }
+.ct-btn-start:disabled { background:rgba(255,255,255,.08); color:rgba(255,255,255,.2); cursor:default; }
+.ct-btn-stop  { background:#B83232; color:#fff; }
+.ct-dur { font-size:11px; font-weight:700; min-width:40px; text-align:right; }
 .card-num{font-family:'Morl',sans-serif;font-weight:900;font-size:26px;color:var(--border2);line-height:1;min-width:30px;margin-top:2px;}
 .card-fields{flex:1;display:flex;flex-direction:column;gap:7px;}
 .field-row{display:flex;gap:8px;}
@@ -2169,6 +2190,70 @@ let cards=[], counter=0;
 function getNivelFromScore(p){return NIVELES_LIST.find(n=>p>=n.min&&p<n.max)||NIVELES_LIST[0];}
 function getLetraFromScore(p){if(p>=90)return'A+';if(p>=85)return'A';if(p>=80)return'B+';if(p>=70)return'B';if(p>=55)return'C';if(p>=40)return'D';return'F';}
 
+const LIMITE_MIN = 20; // estándar de servicio
+const cardTimers = {}; // { id: { start, end, interval } }
+
+function ctStart(id) {
+  if (cardTimers[id]?.start) return; // ya iniciado
+  const now = new Date();
+  cardTimers[id] = { start: now, end: null, interval: null };
+  const d = cards.find(c=>c.id===id);
+  if (d) d.timerStart = now.toISOString();
+
+  // UI
+  document.getElementById(`ct-start-${id}`).style.display = 'none';
+  document.getElementById(`ct-stop-${id}`).style.display  = 'inline-block';
+  document.getElementById(`ct-disp-${id}`).classList.add('running');
+  document.getElementById(`ct-lbl-${id}`).textContent = 'Corriendo…';
+
+  // Tick cada segundo
+  cardTimers[id].interval = setInterval(() => ctTick(id), 1000);
+}
+
+function ctTick(id) {
+  const t = cardTimers[id]; if (!t?.start) return;
+  const diffSec = Math.floor((Date.now() - t.start) / 1000);
+  const mm = Math.floor(diffSec / 60), ss = diffSec % 60;
+  const disp = document.getElementById(`ct-disp-${id}`);
+  if (disp) disp.textContent = `${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
+
+  // Semáforo
+  const diffMin = diffSec / 60;
+  const ct = document.getElementById(`ct-${id}`);
+  if (ct) {
+    ct.classList.remove('sem-ok','sem-warn','sem-late');
+    if      (diffMin > LIMITE_MIN)              ct.classList.add('sem-late');
+    else if (diffMin > LIMITE_MIN * 0.75)       ct.classList.add('sem-warn');
+    else                                        ct.classList.add('sem-ok');
+  }
+}
+
+function ctStop(id) {
+  const t = cardTimers[id]; if (!t?.start) return;
+  clearInterval(t.interval);
+  t.end = new Date();
+  const diffSec = Math.floor((t.end - t.start) / 1000);
+  const mm = Math.floor(diffSec / 60), ss = diffSec % 60;
+  const dur = `${mm}m ${ss}s`;
+
+  const d = cards.find(c=>c.id===id);
+  if (d) d.timerEnd = t.end.toISOString();
+
+  // Color semáforo final
+  const diffMin = diffSec / 60;
+  let color = '#1B5E38';
+  if      (diffMin > LIMITE_MIN)         color = '#B83232';
+  else if (diffMin > LIMITE_MIN * 0.75)  color = '#A07820';
+
+  // UI
+  document.getElementById(`ct-stop-${id}`).style.display  = 'none';
+  document.getElementById(`ct-disp-${id}`).classList.remove('running');
+  document.getElementById(`ct-disp-${id}`).style.color    = color;
+  document.getElementById(`ct-lbl-${id}`).textContent = 'Tiempo total';
+  const durEl = document.getElementById(`ct-dur-${id}`);
+  if (durEl) { durEl.textContent = dur; durEl.style.color = color; durEl.style.display = 'block'; }
+}
+
 function getECTDescD(val){
   if(val<=2)return{label:'Crítico',cls:'ect-critico'};
   if(val<=4)return{label:'Deficiente',cls:'ect-deficiente'};
@@ -2206,6 +2291,15 @@ function addCard(){
         </div>
         <div class="criterios">${critRows}</div>
       </div>
+    </div>
+    <div class="card-timer" id="ct-${id}">
+      <div>
+        <div class="ct-display" id="ct-disp-${id}">00:00</div>
+        <div class="ct-label" id="ct-lbl-${id}">Pedido realizado → Platillo en mesa</div>
+      </div>
+      <button class="ct-btn ct-btn-start" id="ct-start-${id}" onclick="ctStart('${id}')">▶ Pedido</button>
+      <button class="ct-btn ct-btn-stop" id="ct-stop-${id}" onclick="ctStop('${id}')" style="display:none">■ En mesa</button>
+      <span class="ct-dur" id="ct-dur-${id}" style="display:none"></span>
     </div>
     <div class="evidence-zone" id="ev-zone-${id}">
       <button class="btn-capture" onclick="capturePhoto('${id}')">
@@ -2401,7 +2495,9 @@ async function submitAudit(){
       id:c.id,num:c.num,nombre:c.nombre,categoria:c.categoria,
       criterios:c.criterios,score:c._pct||0,nivel:c._nivel,
       observaciones:c.obs,
-      evidence:(c.evidence||[]).map(e=>({id:e.id,base64:e.base64,mimeType:e.mimeType,sizeBytes:e.sizeBytes,capturedAt:e.capturedAt,gps:e.gps,gpsVerified:e.gpsVerified}))
+      timerStart: c.timerStart || null,
+      timerEnd:   c.timerEnd   || null,
+      evidence:(c.evidence||[]).map(e=>({id:e.id,base64:e.base64,mimeType:e.mimeType,sizeBytes:e.sizeBytes,capturedAt:e.capturedAt,gps:e.gps,gpsVerified:!!e.gpsVerified}))
     }))
   };
 
