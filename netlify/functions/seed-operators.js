@@ -1,75 +1,52 @@
-/**
- * seed-operators.js — TEMPORAL — eliminar después de usar
- * Crea operadores admin en el tenant DMZ
- */
-const { Pool }  = require('pg');
-const bcrypt    = require('bcryptjs');
-const crypto    = require('crypto');
+const handler_module = require('./seed-operators_impl');
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: true },
-  max: 3,
-});
+const CORS_ORIGINS = [
+  'https://mariozumaran.github.io',
+  'https://dmz-audit.netlify.app',
+  'https://racreaa.vercel.app',
+];
 
-const SEED_SECRET = process.env.SEED_SECRET || '';
+exports.handler = async (event, context) => {
+  const origin = event.headers['origin'] || event.headers['Origin'] || '';
+  const allowOrigin = CORS_ORIGINS.includes(origin) ? origin : CORS_ORIGINS[0];
 
-module.exports = async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  if (req.method === 'OPTIONS') return res.status(204).end();
-
-  // Requiere secret para ejecutar
-  const { secret } = req.body || {};
-  if (!SEED_SECRET || secret !== SEED_SECRET) {
-    return res.status(403).json({ error: 'Forbidden' });
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 204,
+      headers: {
+        'Access-Control-Allow-Origin': allowOrigin,
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Credentials': 'true',
+      },
+      body: '',
+    };
   }
 
-  const client = await pool.connect();
-  try {
-    // Obtener tenant DMZ
-    const tRes = await client.query(
-      "SELECT id FROM racreaa.tenants WHERE slug = 'dmz' LIMIT 1"
-    );
-    if (!tRes.rows.length) {
-      return res.status(404).json({ error: 'Tenant dmz not found' });
-    }
-    const tenantId = tRes.rows[0].id;
+  const req = {
+    method: event.httpMethod,
+    headers: event.headers || {},
+    body: (() => { try { return JSON.parse(event.body || '{}'); } catch { return {}; } })(),
+    query: event.queryStringParameters || {},
+    socket: { remoteAddress: '' },
+  };
 
-    const operators = [
-      { email: 'mario@delamorazumaran.com', name: 'Mario Zumaran',  pass: 'DMZRacreaa2026!', role: 'admin' },
-      { email: 'blanca@delamorazumaran.com', name: 'Blanca De La Mora', pass: 'DMZRacreaa2026!', role: 'admin' },
-    ];
+  let statusCode = 200;
+  const responseHeaders = {
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': allowOrigin,
+    'Access-Control-Allow-Credentials': 'true',
+    'Vary': 'Origin',
+  };
+  let responseBody = '';
 
-    const results = [];
-    for (const op of operators) {
-      // Check if already exists
-      const exists = await client.query(
-        "SELECT id FROM racreaa.operators WHERE email = $1", [op.email]
-      );
-      if (exists.rows.length) {
-        // Update password
-        const hash = await bcrypt.hash(op.pass, 12);
-        await client.query(
-          "UPDATE racreaa.operators SET password_hash=$1, role=$2, is_active=true WHERE email=$3",
-          [hash, op.role, op.email]
-        );
-        results.push({ email: op.email, action: 'updated', id: exists.rows[0].id });
-      } else {
-        const hash = await bcrypt.hash(op.pass, 12);
-        const ins = await client.query(
-          `INSERT INTO racreaa.operators (tenant_id, email, full_name, password_hash, role)
-           VALUES ($1,$2,$3,$4,$5) RETURNING id`,
-          [tenantId, op.email, op.name, hash, op.role]
-        );
-        results.push({ email: op.email, action: 'created', id: ins.rows[0].id });
-      }
-    }
+  const res = {
+    setHeader: (k, v) => { responseHeaders[k] = v; },
+    status: (code) => { statusCode = code; return res; },
+    json: (data) => { responseBody = JSON.stringify(data); return res; },
+    end: (body) => { if (body) responseBody = body; return res; },
+  };
 
-    return res.status(200).json({ success: true, results });
-  } catch(err) {
-    console.error(err);
-    return res.status(500).json({ error: err.message });
-  } finally {
-    client.release();
-  }
+  await handler_module(req, res);
+  return { statusCode, headers: responseHeaders, body: responseBody };
 };
