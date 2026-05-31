@@ -105,7 +105,7 @@ async function sendReport({ auditId, body, serverTs, tenantId }) {
   </body></html>`;
 
   await resend.emails.send({
-    from:    'DMZ Audit <onboarding@resend.dev>',
+    from:    'DMZ Audit <auditorias@delamorazumaran.com>',
     to:      REPORT_CC,
     subject: `[DMZ Audit] ${sanitize(body.establecimiento)||'Sin nombre'} · ${body.globalScore||0}/100 · ${auditId}`,
     html,
