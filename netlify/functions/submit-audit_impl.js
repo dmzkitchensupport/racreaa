@@ -45,64 +45,89 @@ async function sendReport({ auditId, body, serverTs, tenantId }) {
   const tipo  = (body.tipo || 'alimentos').toUpperCase();
 
   const itemsHtml = (body.items || []).map(item => {
-    const niv = getNivel(item.score||0);
-    const timer = (item.timerStart && item.timerEnd)
-      ? `<span style="font-size:10px;color:#9A9890"> · ${item.timerDuration||''}</span>`
-      : '';
-    const fotos = (item.evidence||[]).length
-      ? `<span style="font-size:10px;color:#2E7D52"> 📷 ${item.evidence.length} foto${item.evidence.length>1?'s':''}</span>`
-      : '';
-    return `<tr>
-      <td style="padding:8px 12px;border-bottom:1px solid #E0DDD4;font-size:12px">${item.num}. ${item.nombre||'—'}${timer}${fotos}</td>
-      <td style="padding:8px 12px;border-bottom:1px solid #E0DDD4;font-size:12px;color:#5C5A54">${item.categoria||'—'}</td>
-      <td style="padding:8px 12px;border-bottom:1px solid #E0DDD4;font-size:12px;font-weight:700;text-align:center;color:${niv.color}">${item.score||0}</td>
-      <td style="padding:8px 12px;border-bottom:1px solid #E0DDD4;font-size:11px;color:#9A9890">${niv.label}</td>
-    </tr>`;
-  }).join('');
+    const niv = getNivel(item.score || 0);
+    const crit = item.criterios || {};
+    const critRows = Object.entries({
+      'Presentación': crit.presentacion,
+      'Temperatura':  crit.temperatura,
+      'Sabor':        crit.sabor,
+      'Textura':      crit.textura,
+      'Porción':      crit.porcion,
+    }).filter(([,v]) => v > 0).map(([k, v]) => {
+      const pct = Math.round((v / 10) * 100);
+      const c = v >= 7 ? '#2E7D52' : v >= 5 ? '#A07820' : '#B83232';
+      return `<tr>
+        <td style="padding:3px 8px;font-size:11px;color:#6B6860;width:110px">${k}</td>
+        <td style="padding:3px 8px"><div style="background:#E8E4DA;border-radius:2px;height:6px"><div style="background:${c};height:6px;border-radius:2px;width:${pct}%"></div></div></td>
+        <td style="padding:3px 8px;font-size:11px;font-weight:700;color:${c};width:36px;text-align:right">${v}/10</td>
+      </tr>`;
+    }).join('');
 
-  const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"></head>
-  <body style="background:#FAFAF7;font-family:Arial,sans-serif;color:#2C2A24;margin:0;padding:0">
-    <div style="max-width:600px;margin:0 auto;background:#fff;border-top:3px solid #C4922A">
-      <div style="background:#2C2A24;padding:24px 32px">
-        <div style="font-weight:900;font-size:18px;letter-spacing:5px;color:#C4922A;text-transform:uppercase">DMZ AUDIT</div>
-        <div style="font-size:9px;letter-spacing:3px;color:rgba(255,255,255,.4);text-transform:uppercase;margin-top:4px">Evaluación de ${tipo} · dmzkitchensupport.github.io</div>
-      </div>
-      <div style="padding:24px 32px;border-bottom:1px solid #E0DDD4">
-        <table style="width:100%;border-collapse:collapse">
-          <tr><td style="padding:5px 0;font-size:10px;color:#9A9890;text-transform:uppercase;letter-spacing:1px;width:140px">ID</td><td style="font-size:11px;font-family:monospace">${auditId}</td></tr>
-          <tr><td style="padding:5px 0;font-size:10px;color:#9A9890;text-transform:uppercase;letter-spacing:1px">Establecimiento</td><td style="font-size:12px">${sanitize(body.establecimiento)||'—'}</td></tr>
-          <tr><td style="padding:5px 0;font-size:10px;color:#9A9890;text-transform:uppercase;letter-spacing:1px">Auditor</td><td style="font-size:12px">${sanitize(body.auditorFirma||body.auditor)||'—'}</td></tr>
-          <tr><td style="padding:5px 0;font-size:10px;color:#9A9890;text-transform:uppercase;letter-spacing:1px">Fecha</td><td style="font-size:12px">${body.fecha||'—'} · ${sanitize(body.servicio)||'—'}</td></tr>
-          ${body.mesero ? `<tr><td style="padding:5px 0;font-size:10px;color:#9A9890;text-transform:uppercase;letter-spacing:1px">Mesero</td><td style="font-size:12px">${sanitize(body.mesero)}</td></tr>` : ''}
-          <tr><td style="padding:5px 0;font-size:10px;color:#9A9890;text-transform:uppercase;letter-spacing:1px">Timestamp</td><td style="font-size:10px;font-family:monospace;color:#5C5A54">${serverTs}</td></tr>
-          ${body.gpsAtSubmission ? `<tr><td style="padding:5px 0;font-size:10px;color:#9A9890;text-transform:uppercase;letter-spacing:1px">GPS</td><td style="font-size:10px;font-family:monospace;color:#2E7D52">✅ ${body.gpsAtSubmission.lat?.toFixed(5)}, ${body.gpsAtSubmission.lng?.toFixed(5)} ±${Math.round(body.gpsAtSubmission.accuracy||0)}m</td></tr>` : ''}
-        </table>
-      </div>
-      <div style="padding:20px 32px;text-align:center;border-bottom:1px solid #E0DDD4">
-        <div style="display:inline-block;background:${nivel.color};padding:14px 32px">
-          <div style="font-size:40px;font-weight:900;color:#fff;line-height:1">${body.globalScore||0}</div>
-          <div style="font-size:9px;font-weight:700;letter-spacing:3px;color:rgba(255,255,255,.7);text-transform:uppercase;margin-top:3px">${nivel.label}</div>
+    const fotosHtml = (item.evidence || []).slice(0, 5).map(ev => {
+      if (!ev.base64) return '';
+      const mime = ev.mimeType || 'image/jpeg';
+      const gps = ev.gps ? `<div style="font-size:9px;color:#2E7D52;margin-top:2px">📍 ${ev.gps.lat?.toFixed(5)}, ${ev.gps.lng?.toFixed(5)}</div>` : '';
+      return `<div style="margin:6px 0"><img src="data:${mime};base64,${ev.base64}" style="max-width:100%;max-height:220px;border-radius:3px;border:1px solid #E0DDD4"/>${gps}</div>`;
+    }).join('');
+
+    return `<div style="background:#fff;border:1px solid #E0DDD4;border-left:3px solid ${niv.color};margin-bottom:12px;border-radius:2px">
+      <div style="padding:10px 14px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #F0EDE6">
+        <div>
+          <span style="font-size:10px;color:#9A9890;font-weight:700">0${item.num}</span>
+          <span style="font-size:13px;font-weight:700;color:#2C2A24;margin-left:8px">${sanitize(item.nombre||'Sin nombre')}</span>
+          <span style="font-size:10px;color:#9A9890;margin-left:6px">${sanitize(item.categoria||'')}</span>
+        </div>
+        <div style="background:${niv.color};padding:4px 12px;border-radius:2px;text-align:center">
+          <div style="font-size:18px;font-weight:900;color:#fff;line-height:1">${item.score||0}</div>
+          <div style="font-size:8px;color:rgba(255,255,255,.8);text-transform:uppercase">${niv.label}</div>
         </div>
       </div>
-      ${(body.items||[]).length ? `
-      <div style="padding:20px 32px;border-bottom:1px solid #E0DDD4">
-        <div style="font-size:9px;font-weight:700;letter-spacing:3px;color:#8A6C1E;text-transform:uppercase;margin-bottom:10px">Detalle</div>
-        <table style="width:100%;border-collapse:collapse">
-          <thead><tr style="background:#F3F1EB">
-            <th style="padding:7px 12px;text-align:left;font-size:9px;letter-spacing:1px;color:#9A9890;text-transform:uppercase">Platillo / Criterio</th>
-            <th style="padding:7px 12px;text-align:left;font-size:9px;color:#9A9890;text-transform:uppercase">Categoría</th>
-            <th style="padding:7px 12px;text-align:center;font-size:9px;color:#9A9890;text-transform:uppercase">Score</th>
-            <th style="padding:7px 12px;text-align:left;font-size:9px;color:#9A9890;text-transform:uppercase">Nivel</th>
-          </tr></thead>
-          <tbody>${itemsHtml}</tbody>
-        </table>
-      </div>` : ''}
-      ${body.conclusion ? `<div style="padding:20px 32px;border-bottom:1px solid #E0DDD4"><div style="font-size:9px;font-weight:700;letter-spacing:3px;color:#8A6C1E;text-transform:uppercase;margin-bottom:8px">Dictamen</div><p style="font-size:12px;color:#5C5A54;line-height:1.7;margin:0">${sanitize(body.conclusion,2000)}</p></div>` : ''}
-      <div style="padding:16px 32px;background:#F3F1EB;text-align:center;font-size:9px;color:#9A9890">
-        DMZ Kitchen Support · DMZ Audit · <code>${auditId}</code>
-      </div>
+      ${critRows ? `<div style="padding:8px 14px;border-bottom:1px solid #F0EDE6"><table style="width:100%;border-collapse:collapse">${critRows}</table></div>` : ''}
+      ${item.observaciones ? `<div style="padding:8px 14px;border-bottom:1px solid #F0EDE6"><div style="font-size:9px;color:#8A6C1E;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Observaciones</div><p style="margin:0;font-size:12px;color:#5C5A54;line-height:1.5">${sanitize(item.observaciones,500)}</p></div>` : ''}
+      ${fotosHtml ? `<div style="padding:8px 14px"><div style="font-size:9px;color:#2E7D52;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Evidencia fotográfica</div>${fotosHtml}</div>` : ''}
+    </div>`;
+  }).join('');
+
+  const firmaHtml = body.signatureImage
+    ? `<div style="padding:16px 32px;border-bottom:1px solid #E0DDD4">
+        <div style="font-size:9px;font-weight:700;letter-spacing:3px;color:#8A6C1E;text-transform:uppercase;margin-bottom:8px">Firma Digital</div>
+        <img src="${body.signatureImage}" style="max-width:220px;border:1px solid #E0DDD4;background:#F8F6F0;padding:4px"/>
+        <div style="font-size:11px;color:#5C5A54;margin-top:4px">${sanitize(body.auditorFirma||body.auditor||'—')}</div>
+      </div>` : '';
+
+  const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+  <body style="background:#F3F1EB;font-family:Arial,sans-serif;color:#2C2A24;margin:0;padding:20px 0">
+  <div style="max-width:620px;margin:0 auto;background:#fff;border-top:4px solid #C4922A;box-shadow:0 2px 8px rgba(0,0,0,.08)">
+    <div style="background:#2C2A24;padding:24px 32px">
+      <div style="font-weight:900;font-size:20px;letter-spacing:5px;color:#C4922A;text-transform:uppercase">DMZ AUDIT</div>
+      <div style="font-size:9px;letter-spacing:3px;color:rgba(255,255,255,.4);text-transform:uppercase;margin-top:4px">Evaluación de ${tipo} · De La Mora Zumarán Kitchen Support</div>
     </div>
-  </body></html>`;
+    <div style="padding:20px 32px;border-bottom:1px solid #E0DDD4">
+      <table style="width:100%;border-collapse:collapse">
+        <tr><td style="padding:4px 0;font-size:10px;color:#9A9890;text-transform:uppercase;letter-spacing:1px;width:140px">ID</td><td style="font-size:11px;font-family:monospace">${auditId}</td></tr>
+        <tr><td style="padding:4px 0;font-size:10px;color:#9A9890;text-transform:uppercase;letter-spacing:1px">Establecimiento</td><td style="font-size:13px;font-weight:700">${sanitize(body.establecimiento)||'—'}</td></tr>
+        <tr><td style="padding:4px 0;font-size:10px;color:#9A9890;text-transform:uppercase;letter-spacing:1px">Auditor</td><td style="font-size:12px">${sanitize(body.auditorFirma||body.auditor)||'—'}</td></tr>
+        <tr><td style="padding:4px 0;font-size:10px;color:#9A9890;text-transform:uppercase;letter-spacing:1px">Responsable</td><td style="font-size:12px">${sanitize(body.chefFirma)||'—'}</td></tr>
+        <tr><td style="padding:4px 0;font-size:10px;color:#9A9890;text-transform:uppercase;letter-spacing:1px">Fecha</td><td style="font-size:12px">${body.fecha||'—'} · ${sanitize(body.servicio)||'—'}</td></tr>
+        <tr><td style="padding:4px 0;font-size:10px;color:#9A9890;text-transform:uppercase;letter-spacing:1px">Timestamp</td><td style="font-size:10px;font-family:monospace;color:#5C5A54">${serverTs}</td></tr>
+        ${body.gpsAtSubmission ? `<tr><td style="padding:4px 0;font-size:10px;color:#9A9890;text-transform:uppercase;letter-spacing:1px">GPS</td><td style="font-size:10px;font-family:monospace;color:#2E7D52">✅ ${body.gpsAtSubmission.lat?.toFixed(5)}, ${body.gpsAtSubmission.lng?.toFixed(5)} ±${Math.round(body.gpsAtSubmission.accuracy||0)}m</td></tr>` : ''}
+      </table>
+    </div>
+    <div style="padding:24px 32px;text-align:center;border-bottom:1px solid #E0DDD4;background:#FAFAF7">
+      <div style="display:inline-block;background:${nivel.color};padding:16px 40px;border-radius:3px">
+        <div style="font-size:48px;font-weight:900;color:#fff;line-height:1">${body.globalScore||0}</div>
+        <div style="font-size:10px;font-weight:700;letter-spacing:3px;color:rgba(255,255,255,.8);text-transform:uppercase;margin-top:4px">${nivel.label}</div>
+      </div>
+      <div style="font-size:11px;color:#9A9890;margin-top:10px">${(body.items||[]).length} platillo${(body.items||[]).length!==1?'s':''} evaluado${(body.items||[]).length!==1?'s':''}</div>
+    </div>
+    ${itemsHtml ? `<div style="padding:20px 32px;border-bottom:1px solid #E0DDD4"><div style="font-size:9px;font-weight:700;letter-spacing:3px;color:#8A6C1E;text-transform:uppercase;margin-bottom:14px">Evaluación por platillo</div>${itemsHtml}</div>` : ''}
+    ${body.conclusion ? `<div style="padding:20px 32px;border-bottom:1px solid #E0DDD4"><div style="font-size:9px;font-weight:700;letter-spacing:3px;color:#8A6C1E;text-transform:uppercase;margin-bottom:8px">Dictamen del consultor</div><p style="font-size:13px;color:#2C2A24;line-height:1.7;margin:0;font-style:italic">"${sanitize(body.conclusion,2000)}"</p></div>` : ''}
+    ${firmaHtml}
+    <div style="padding:16px 32px;background:#2C2A24;text-align:center">
+      <div style="font-size:9px;color:rgba(255,255,255,.4);letter-spacing:2px;text-transform:uppercase">De La Mora Zumarán · DMZ Kitchen Support · Confidencial</div>
+      <div style="font-size:9px;font-family:monospace;color:#C4922A;margin-top:4px">${auditId}</div>
+    </div>
+  </div></body></html>`;
 
   await resend.emails.send({
     from:    'DMZ Audit <auditorias@delamorazumaran.com>',
