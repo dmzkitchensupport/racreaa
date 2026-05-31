@@ -12,6 +12,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 const JWT_SECRET   = process.env.JWT_SECRET;
 const REPORT_EMAIL = process.env.AUDIT_REPORT_EMAIL || 'mario@delamorazumaran.com';
+const REPORT_CC    = ['mario@delamorazumaran.com', 'blanca@delamorazumaran.com'];
 
 const ALLOWED_ORIGINS = [
   ...(process.env.ALLOWED_ORIGINS||'').split(',').map(s=>s.trim()),
@@ -105,8 +106,8 @@ async function sendReport({ auditId, body, serverTs, tenantId }) {
 
   await resend.emails.send({
     from:    'DMZ Audit <onboarding@resend.dev>',
-    to:      [REPORT_EMAIL],
-    subject: `[DMZ Audit] ${auditId} — ${sanitize(body.establecimiento)||'Sin nombre'} — ${body.globalScore||0} pts (${getNivel(body.globalScore||0).label})`,
+    to:      REPORT_CC,
+    subject: `[DMZ Audit] ${sanitize(body.establecimiento)||'Sin nombre'} · ${body.globalScore||0}/100 · ${auditId}`,
     html,
   });
 }
@@ -246,17 +247,22 @@ module.exports = async function handler(req, res) {
 
     await client.query('COMMIT');
 
-    // Email asíncrono
-    sendReport({ auditId, body, serverTs, tenantId }).catch(e =>
-      console.error('[email]', e.message)
-    );
+    // Email — esperar resultado para reportarlo
+    let email_sent = false;
+    try {
+      await sendReport({ auditId, body, serverTs, tenantId });
+      email_sent = true;
+    } catch(e) {
+      console.error('[email]', e.message);
+    }
 
     return res.status(200).json({
       success: true,
       auditId,
       timestamp: serverTs,
       fotos_guardadas: totalFotos,
-      message: `Evaluación registrada. ${totalFotos} foto${totalFotos!==1?'s':''} guardada${totalFotos!==1?'s':''}.`
+      email_sent,
+      message: `Evaluación registrada. ${totalFotos} foto${totalFotos!==1?'s':''} guardada${totalFotos!==1?'s':''}. ${email_sent ? 'Reporte enviado por email.' : 'Email pendiente.'}`
     });
 
   } catch(err) {
