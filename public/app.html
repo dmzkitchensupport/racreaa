@@ -1126,6 +1126,44 @@ if (!at) { window.location.href = '/login.html'; }
 
 let _token = at;
 function getToken() { return sessionStorage.getItem('racreaa_at') || _token; }
+
+// Auto-refresh: si el servidor devuelve 401, refrescar token y reintentar
+async function fetchWithAuth(url, opts={}) {
+  opts.headers = opts.headers || {};
+  opts.headers['Authorization'] = `Bearer ${getToken()}`;
+  let res = await fetch(url, opts);
+
+  if (res.status === 401) {
+    // Intentar refresh
+    const refreshed = await tryRefreshToken();
+    if (refreshed) {
+      opts.headers['Authorization'] = `Bearer ${getToken()}`;
+      res = await fetch(url, opts);
+    } else {
+      // Refresh falló — volver al login
+      sessionStorage.clear();
+      window.location.href = '/login.html';
+      return res;
+    }
+  }
+  return res;
+}
+
+async function tryRefreshToken() {
+  try {
+    const res = await fetch('https://dmz-audit.netlify.app/.netlify/functions/auth-refresh', {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    if (!res.ok) return false;
+    const d = await res.json();
+    if (d.token) {
+      sessionStorage.setItem('racreaa_at', d.token);
+      return true;
+    }
+    return false;
+  } catch { return false; }
+}
 const OPERATOR = opRaw ? JSON.parse(opRaw) : { full_name:'Auditor', role:'auditor' };
 const TENANT   = tenRaw ? JSON.parse(tenRaw) : { slug:'dmz' };
 
@@ -1632,9 +1670,9 @@ async function submitFromSheet() {
   }
 
   try {
-    const res = await fetch('https://dmz-audit.netlify.app/api/submit-audit', {
+    const res = await fetchWithAuth('https://dmz-audit.netlify.app/api/submit-audit', {
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':`Bearer ${getToken()}`,
+      headers:{'Content-Type':'application/json',
         'X-Client-GPS':GPS?`${GPS.lat},${GPS.lng}`:'unavailable',
         'X-Request-ID':'APP-'+Date.now().toString(36).toUpperCase()},
       body: JSON.stringify(payload),
