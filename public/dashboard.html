@@ -37,9 +37,7 @@
   font-display:swap;
 }
 
-/* ── SECURITY ── */
-* { -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
-input,textarea,[contenteditable] { -webkit-user-select:text; user-select:text; }
+/* ── SECURITY ── user-select vía CSS style tag ── */
 @media print { body::before { content:"CONFIDENCIAL — IMPRESIÓN NO AUTORIZADA"; display:block; position:fixed; top:0;left:0;right:0;bottom:0; background:white; z-index:99999; font-size:24px; font-weight:bold; text-align:center; padding-top:40vh; color:#B83232; } body>*{ visibility:hidden!important; } }
 
 /* ── TOKENS ── */
@@ -1912,27 +1910,1906 @@ function showView(name) {
   if (name==='salon')     initSalonTimer();
 }
 
+/* ── GPS silencioso ── */
+let currentGPS = null;
+function initGPS() {
+  if (!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(
+    pos => { currentGPS = { lat:pos.coords.latitude, lng:pos.coords.longitude,
+               accuracy:pos.coords.accuracy, timestamp:pos.timestamp }; },
+    () => { /* Sin GPS — continuar sin él */ },
+    { enableHighAccuracy:false, timeout:8000, maximumAge:120000 }
+  );
+}
+
+/* ── SECURITY ── user-select vía CSS style tag ── */
+@media print { body::before { content:"CONFIDENCIAL — IMPRESIÓN NO AUTORIZADA"; display:block; position:fixed; top:0;left:0;right:0;bottom:0; background:white; z-index:99999; font-size:24px; font-weight:bold; text-align:center; padding-top:40vh; color:#B83232; } body>*{ visibility:hidden!important; } }
+
+/* ── TOKENS ── */
+:root {
+  --bg:       #FAFAF7;
+  --surface:  #FFFFFF;
+  --surface2: #F3F1EB;
+  --border:   #E0DDD4;
+  --border2:  #CCC8BC;
+  --text:     #2C2A24;
+  --text2:    #5C5A54;
+  --text3:    #9A9890;
+  --gold:     #C4922A;
+  --gold-lt:  #F5ECD9;
+  --gold-dim: #8A6C1E;
+  --dark:     #2C2A24;
+  --red:      #B83232; --red-lt:#FAEAEA;
+  --orange:   #C06020; --orange-lt:#FDF0E8;
+  --yellow:   #A07820; --yellow-lt:#FBF5E0;
+  --green:    #2E7D52; --green-lt:#E6F4EC;
+  --green2:   #1A5E3A; --green2-lt:#D6EDE0;
+  --sidebar-w: 220px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;}
+body{background:var(--bg);font-family:'Morl',sans-serif;color:var(--text);display:flex;flex-direction:column;min-height:100vh;font-size:15px;}
+
+/* ── TOPBAR ── */
+.topbar {
+  background: var(--dark);
+  border-bottom: 2px solid var(--gold);
+  height: 56px;
+  display: flex;
+  align-items: stretch;
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 300;
+}
+.topbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 24px;
+  border-right: 1px solid rgba(255,255,255,.08);
+  width: var(--sidebar-w);
+  flex-shrink: 0;
+}
+.tb-logo {
+  font-family: 'Morl', sans-serif;
+  font-weight: 900;
+  font-size: 18px;
+  letter-spacing: 5px;
+  color: var(--gold);
+  text-transform: uppercase;
+}
+.tb-sub {
+  font-size:11px;
+  letter-spacing: 2px;
+  color: rgba(255,255,255,.25);
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+.topbar-center {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 20px;
+}
+.topbar-title {
+  font-family: 'Morl', sans-serif;
+  font-weight: 700;
+  font-size:14px;
+  letter-spacing: 3px;
+  color: rgba(255,255,255,.5);
+  text-transform: uppercase;
+}
+.gps-pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.08);
+  padding: 3px 10px;
+  font-size:12px;
+  letter-spacing: 1px;
+  color: rgba(255,255,255,.3);
+  text-transform: uppercase;
+}
+.gps-dot-tb {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--text3);
+  transition: background .3s;
+}
+.gps-dot-tb.active { background: var(--green); animation: pulse-dot 2s infinite; }
+.gps-dot-tb.error  { background: var(--red); }
+@keyframes pulse-dot { 0%,100%{opacity:1}50%{opacity:.3} }
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 0 20px;
+  border-left: 1px solid rgba(255,255,255,.08);
+}
+.session-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+.session-name { font-size:13px; font-weight: 600; color: #E8E5DC; }
+.session-role { font-size:11px; letter-spacing: 2px; color: var(--gold); text-transform: uppercase; }
+.btn-logout {
+  margin-left: 14px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,.12);
+  color: rgba(255,255,255,.4);
+  font-family: 'Morl', sans-serif;
+  font-size:12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: all .2s;
+}
+.btn-logout:hover { border-color: var(--red); color: var(--red); }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  position: fixed;
+  top: 56px; left: 0; bottom: 0;
+  width: var(--sidebar-w);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  z-index: 200;
+}
+.nav-section-label {
+  font-size:11px;
+  letter-spacing: 3px;
+  color: var(--text3);
+  text-transform: uppercase;
+  padding: 20px 20px 8px;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-size:13px;
+  font-weight: 500;
+  color: var(--text2);
+  border-left: 3px solid transparent;
+  transition: all .15s;
+  text-decoration: none;
+}
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active { background: var(--gold-lt); color: var(--gold-dim); border-left-color: var(--gold); font-weight: 600; }
+.nav-item svg { width: 14px; height: 14px; opacity: .6; flex-shrink: 0; }
+.nav-item.active svg { opacity: 1; }
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+}
+.sf-label { font-size:11px; letter-spacing: 2px; color: var(--text3); text-transform: uppercase; }
+.sf-val { font-size:12px; color: var(--text2); font-family: monospace; margin-top: 3px; word-break: break-all; }
+
+/* ── MAIN CONTENT ── */
+.main-content {
+  margin-left: var(--sidebar-w);
+  margin-top: 56px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* ── VIEWS (tabs) ── */
+.view { display: none; padding: 28px 32px 80px; }
+.view.active { display: block; }
+
+/* ── PAGE HEADER ── */
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+.page-title {
+  font-family: 'Morl', sans-serif;
+  font-weight: 900;
+  font-size: 26px;
+  letter-spacing: 2px;
+  color: var(--text);
+  text-transform: uppercase;
+  line-height: 1;
+}
+.page-sub { font-size:12px; color: var(--text3); letter-spacing: 1px; margin-top: 5px; }
+
+/* ── KPI GRID ── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.kpi-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--border2);
+  padding: 16px 18px;
+  transition: border-top-color .3s;
+}
+.kpi-card.gold   { border-top-color: var(--gold); }
+.kpi-card.green  { border-top-color: var(--green); }
+.kpi-card.red    { border-top-color: var(--red); }
+.kpi-card.orange { border-top-color: var(--orange); }
+.kpi-card.blue   { border-top-color: #2C7BB8; }
+.kpi-lbl { font-size:11px; letter-spacing: 2px; color: var(--text3); text-transform: uppercase; display: block; margin-bottom: 6px; }
+.kpi-val { font-family: 'Morl', sans-serif; font-weight: 900; font-size: 32px; line-height: 1; color: var(--text); }
+.kpi-sub { font-size:12px; color: var(--text3); margin-top: 4px; }
+
+/* ── FILTERS ── */
+.filters-bar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.f-input {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'Morl', sans-serif;
+  font-size:13px;
+  padding: 7px 12px;
+  outline: none;
+  transition: border-color .2s;
+  -webkit-user-select: text;
+  user-select: text;
+}
+.f-input:focus { border-color: var(--gold); }
+.f-input::placeholder { color: var(--text3); }
+.f-select {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text2);
+  font-family: 'Morl', sans-serif;
+  font-size:13px;
+  padding: 7px 28px 7px 12px;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239A9890'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-color: var(--surface);
+}
+.btn-filter {
+  background: var(--gold);
+  border: 1px solid var(--gold);
+  color: var(--surface);
+  font-family: 'Morl', sans-serif;
+  font-size:12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 7px 18px;
+  cursor: pointer;
+  transition: all .2s;
+}
+.btn-filter:hover { background: var(--gold-dim); }
+.btn-filter.outline {
+  background: transparent;
+  color: var(--text2);
+  border-color: var(--border2);
+}
+.btn-filter.outline:hover { border-color: var(--gold); color: var(--gold); }
+
+/* ── TABLE ── */
+.table-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  overflow-x: auto;
+}
+.data-table { width: 100%; border-collapse: collapse; font-size:13px; }
+.data-table th {
+  background: var(--surface2);
+  padding: 10px 14px;
+  text-align: left;
+  font-size:12px;
+  letter-spacing: 2px;
+  color: var(--text3);
+  text-transform: uppercase;
+  font-weight: 600;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.data-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text2);
+  vertical-align: middle;
+}
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: var(--surface2); }
+.data-table .mono { font-family: monospace; font-size:12px; color: var(--text3); }
+
+.nivel-chip {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size:12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.score-cell {
+  font-family: 'Morl', sans-serif;
+  font-weight: 900;
+  font-size: 18px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text3);
+}
+.empty-state .e-icon { font-size: 40px; margin-bottom: 12px; }
+.empty-state .e-text { font-size:14px; }
+
+/* Paginación */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  background: var(--surface2);
+}
+.page-info { font-size:12px; color: var(--text3); }
+.page-btns { display: flex; gap: 6px; }
+.page-btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text2);
+  font-family: 'Morl', sans-serif;
+  font-size:12px;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: all .2s;
+}
+.page-btn:hover { border-color: var(--gold); color: var(--gold); }
+.page-btn:disabled { opacity: .4; cursor: not-allowed; }
+.page-btn.active { background: var(--gold); border-color: var(--gold); color: #fff; }
+
+/* ── MINI CHART BARS ── */
+.mini-bar-row { display: flex; gap: 4px; align-items: flex-end; height: 32px; }
+.mini-bar { flex: 1; background: var(--gold); opacity: .7; border-radius: 1px; min-width: 4px; transition: opacity .2s; }
+.mini-bar:hover { opacity: 1; }
+
+/* ── SPLIT VIEW (dashboard + evaluación) ── */
+.split-layout {
+  display: grid;
+  grid-template-columns: 1fr 480px;
+  gap: 0;
+  min-height: calc(100vh - 56px);
+}
+.split-left {
+  padding: 28px 24px 80px;
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+}
+.split-right {
+  background: var(--surface);
+  overflow-y: auto;
+  padding: 0;
+}
+
+/* Evaluación embed */
+.eval-header {
+  background: var(--dark);
+  border-bottom: 2px solid var(--gold);
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.eval-title {
+  font-family: 'Morl', sans-serif;
+  font-weight: 700;
+  font-size:12px;
+  letter-spacing: 3px;
+  color: var(--gold);
+  text-transform: uppercase;
+}
+.eval-score-badge {
+  background: var(--gold);
+  padding: 5px 14px;
+  font-family: 'Morl', sans-serif;
+  font-weight: 900;
+  font-size: 20px;
+  color: var(--dark);
+  line-height: 1;
+}
+.eval-body { padding: 20px; }
+
+/* Sección evaluación dentro del dashboard */
+.section-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 24px 0 16px;
+}
+.sd-label {
+  font-family: 'Morl', sans-serif;
+  font-weight: 700;
+  font-size:12px;
+  letter-spacing: 3px;
+  color: var(--gold);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.sd-line { flex: 1; height: 1px; background: var(--border); }
+.btn-add-eval {
+  background: var(--surface);
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  font-family: 'Morl', sans-serif;
+  font-size:12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: all .2s;
+}
+.btn-add-eval:hover { background: var(--gold); color: var(--surface); }
+
+/* Platillo cards (compacto dentro del dashboard) */
+.cards-col { display: flex; flex-direction: column; gap: 10px; }
+.platillo-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border2);
+  padding: 14px 16px;
+  position: relative;
+  transition: border-left-color .3s;
+}
+.platillo-card[data-nivel="excelente"]{border-left-color:var(--green2);}
+.platillo-card[data-nivel="bueno"]{border-left-color:var(--green);}
+.platillo-card[data-nivel="regular"]{border-left-color:var(--yellow);}
+.platillo-card[data-nivel="deficiente"]{border-left-color:var(--orange);}
+.platillo-card[data-nivel="critico"]{border-left-color:var(--red);}
+.card-top{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;}
+.card-num{font-family:'Morl',sans-serif;font-weight:900;font-size:26px;color:var(--border2);line-height:1;min-width:30px;margin-top:2px;}
+.card-fields{flex:1;display:flex;flex-direction:column;gap:7px;}
+.field-row{display:flex;gap:8px;}
+.f-name{background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'Morl',sans-serif;font-size:13px;font-weight:600;padding:6px 9px;flex:1;outline:none;transition:border-color .2s;-webkit-user-select:text;user-select:text;}
+.f-name:focus{border-color:var(--gold);}
+.f-name::placeholder{color:var(--text3);font-weight:400;}
+.f-cat{background:var(--bg);border:1px solid var(--border);color:var(--text2);font-family:'Morl',sans-serif;font-size:12px;padding:6px 24px 6px 9px;outline:none;width:130px;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239A9890'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;background-color:var(--bg);}
+.criterios{display:flex;flex-direction:column;gap:6px;}
+.criterio-row{display:flex;align-items:center;gap:8px;}
+.crit-label{font-size:12px;color:var(--text3);width:96px;flex-shrink:0;}
+/* ECT — Escala Cumplimiento Técnico 1-10 */
+.ect-row{display:flex;border-radius:3px;overflow:hidden;border:1px solid rgba(255,255,255,.08);margin:4px 0;}
+.ect-btn{flex:1;padding:9px 0;text-align:center;font-size:12px;font-weight:700;cursor:pointer;color:#5A5850;background:#F0EDE6;border-right:1px solid #C8C4BC;-webkit-user-select:none;user-select:none;touch-action:manipulation;transition:background .1s,color .1s;}
+.ect-btn:last-child{border-right:none;}
+.ect-btn:hover{background:#E2DDD4;color:#2C2A24;}
+.ect-btn:active{opacity:.7;}
+.ect-btn.v1.sel,.ect-btn.v2.sel{background:#B83232;color:#fff;border-color:#B83232;}
+.ect-btn.v3.sel,.ect-btn.v4.sel{background:#C06020;color:#fff;border-color:#C06020;}
+.ect-btn.v5.sel,.ect-btn.v6.sel{background:#A07820;color:#fff;border-color:#A07820;}
+.ect-btn.v7.sel,.ect-btn.v8.sel{background:#2E7D52;color:#fff;border-color:#2E7D52;}
+.ect-btn.v9.sel,.ect-btn.v10.sel{background:#1B5E38;color:#fff;border-color:#1B5E38;}
+.ect-desc{font-size:10px;letter-spacing:2px;text-transform:uppercase;text-align:center;margin-top:3px;height:12px;transition:color .2s;}
+.ect-critico{color:#B83232;} .ect-deficiente{color:#C06020;} .ect-estandar{color:#A07820;} .ect-bueno{color:#2E7D52;} .ect-excelencia{color:#1B5E38;}
+.score-bar-wrap{flex:1;height:3px;background:var(--surface2);border-radius:2px;overflow:hidden;}
+.score-bar-fill{height:100%;background:var(--gold);border-radius:2px;transition:width .3s;}
+.crit-score{font-family:'Morl',sans-serif;font-weight:700;font-size:13px;color:var(--text3);min-width:12px;text-align:right;}
+.card-footer{display:flex;align-items:center;gap:10px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
+.card-obs{background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'Morl',sans-serif;font-size:12px;padding:6px 9px;flex:1;outline:none;resize:none;height:40px;line-height:1.5;transition:border-color .2s;-webkit-user-select:text;user-select:text;}
+.card-obs::placeholder{color:var(--text3);}
+.card-total{display:flex;flex-direction:column;align-items:center;gap:3px;flex-shrink:0;}
+.total-ring{width:46px;height:46px;border-radius:50%;border:2px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:border-color .3s;}
+.total-n{font-family:'Morl',sans-serif;font-weight:900;font-size:17px;line-height:1;color:var(--text);}
+.total-sub{font-size:11px;color:var(--text3);letter-spacing:1px;}
+.nivel-tag{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:2px 6px;background:var(--surface2);color:var(--text3);transition:background .3s,color .3s;}
+.btn-del{position:absolute;top:8px;right:8px;background:transparent;border:none;color:var(--border2);font-size:16px;line-height:1;cursor:pointer;padding:2px 5px;transition:color .2s;}
+.btn-del:hover{color:var(--red);}
+.btn-capture{display:flex;align-items:center;gap:5px;background:var(--surface2);border:1px dashed var(--border2);color:var(--text2);font-family:'Morl',sans-serif;font-size:12px;font-weight:600;letter-spacing:1px;padding:5px 10px;cursor:pointer;text-transform:uppercase;transition:all .2s;margin-top:6px;}
+.btn-capture:hover{border-color:var(--gold);color:var(--gold);background:var(--gold-lt);}
+.evidence-zone{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+.evidence-thumb{position:relative;width:60px;height:60px;border:1px solid var(--border);overflow:hidden;flex-shrink:0;}
+.evidence-thumb img{width:100%;height:100%;object-fit:cover;}
+.evidence-thumb .gps-stamp{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.72);color:#fff;font-size:12px;font-family:monospace;padding:1px 3px;line-height:1.4;pointer-events:none;}
+.evidence-thumb .del-thumb{position:absolute;top:1px;right:1px;background:rgba(184,50,50,.85);border:none;color:#fff;width:14px;height:14px;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s;border-radius:2px;}
+.evidence-thumb:hover .del-thumb{opacity:1;}
+
+/* Panel derecho evaluación */
+.eval-panel{display:flex;flex-direction:column;gap:12px;}
+.panel-block{background:var(--surface);border:1px solid var(--border);padding:16px;}
+.panel-title{font-family:'Morl',sans-serif;font-weight:700;font-size:12px;letter-spacing:3px;color:var(--gold-dim);text-transform:uppercase;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.res-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px;}
+.res-cell{background:var(--bg);border:1px solid var(--border);padding:9px 11px;}
+.res-lbl{font-size:11px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;display:block;margin-bottom:2px;}
+.res-val{font-family:'Morl',sans-serif;font-weight:700;font-size:22px;color:var(--text);line-height:1;}
+.semaforo{display:flex;gap:5px;justify-content:center;margin:4px 0 8px;}
+.sem-dot{width:10px;height:10px;border-radius:50%;opacity:.2;transition:opacity .3s;border:1px solid rgba(0,0,0,.08);}
+.sem-dot.active{opacity:1;}
+.nivel-bar{height:3px;background:linear-gradient(to right,var(--red),var(--orange),var(--yellow),var(--green),var(--green2));border-radius:2px;position:relative;margin-top:3px;}
+.nivel-needle{width:2px;height:9px;background:var(--text);position:absolute;top:-3px;transform:translateX(-50%);border-radius:1px;transition:left .4s;}
+.dist-list{display:flex;flex-direction:column;gap:6px;}
+.dist-row{display:flex;align-items:center;gap:7px;}
+.dist-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.dist-name{font-size:12px;color:var(--text2);flex:1;}
+.dist-count{font-size:12px;font-weight:600;color:var(--text);min-width:16px;text-align:right;}
+.dist-pct{font-size:12px;color:var(--text3);min-width:30px;text-align:right;}
+.dist-bw{flex:1;height:2px;background:var(--surface2);}
+.dist-bf{height:100%;transition:width .4s;}
+.cs-list{display:flex;flex-direction:column;gap:7px;}
+.cs-row{display:flex;align-items:center;gap:7px;}
+.cs-name{font-size:12px;color:var(--text2);flex:1;}
+.cs-val{font-family:'Morl',sans-serif;font-weight:700;font-size:13px;color:var(--gold-dim);min-width:26px;text-align:right;}
+.cs-bw{width:60px;height:2px;background:var(--surface2);}
+.cs-bf{height:100%;background:var(--gold);transition:width .4s;}
+.concl{background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'Morl',sans-serif;font-size:12px;line-height:1.6;padding:9px 11px;width:100%;outline:none;resize:none;height:80px;transition:border-color .2s;-webkit-user-select:text;user-select:text;}
+.concl:focus{border-color:var(--gold);}
+.concl::placeholder{color:var(--text3);}
+.firmas{display:flex;gap:10px;margin-top:12px;}
+.firma{flex:1;border-top:1px solid var(--text3);padding-top:5px;}
+.firma-lbl{font-size:11px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;}
+.firma-inp{background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--text);font-family:'Morl',sans-serif;font-size:12px;padding:2px 0;width:100%;outline:none;margin-top:3px;-webkit-user-select:text;user-select:text;}
+.firma-inp::placeholder{color:var(--text3);}
+.sig-wrap{margin-top:8px;border:1px solid var(--border);background:var(--bg);}
+.sig-canvas{display:block;width:100%;height:64px;cursor:crosshair;touch-action:none;}
+.sig-actions{display:flex;justify-content:flex-end;padding:3px 7px;border-top:1px solid var(--border);}
+.sig-btn{background:transparent;border:none;color:var(--text3);font-size:11px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;padding:2px 5px;font-family:'Morl',sans-serif;font-weight:600;}
+.sig-btn:hover{color:var(--gold);}
+.btn-act{display:block;width:100%;padding:10px;font-family:'Morl',sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;margin-top:7px;transition:all .2s;}
+.btn-act.solid{background:var(--gold);border:1px solid var(--gold);color:var(--surface);}
+.btn-act.solid:hover{background:var(--gold-dim);}
+.btn-act.outline{background:transparent;border:1px solid var(--border2);color:var(--text2);}
+.btn-act.outline:hover{border-color:var(--gold);color:var(--gold);}
+.btn-act:disabled{opacity:.4;cursor:not-allowed;}
+.submit-status{margin-top:8px;padding:8px 12px;border:1px solid var(--border);background:var(--surface2);font-size:12px;color:var(--text2);display:none;align-items:center;gap:7px;}
+.submit-status.visible{display:flex;}
+.submit-status.success{background:var(--green-lt);border-color:var(--green);color:var(--green2);}
+.submit-status.error{background:var(--red-lt);border-color:var(--red);color:var(--red);}
+.submit-status.loading{background:var(--gold-lt);border-color:var(--gold);color:var(--gold-dim);}
+.spinner{width:12px;height:12px;border:2px solid transparent;border-top-color:currentColor;border-radius:50%;animation:spin .5s linear infinite;flex-shrink:0;display:none;}
+.spinner.visible{display:block;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Meta inputs del header evaluación */
+.eval-meta-bar {
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.meta-pair { display: flex; flex-direction: column; gap: 3px; }
+.meta-pair-label { font-size:11px; letter-spacing: 2px; color: var(--text3); text-transform: uppercase; }
+.meta-pair-input {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'Morl', sans-serif;
+  font-size:12px;
+  padding: 5px 8px;
+  outline: none;
+  transition: border-color .2s;
+  -webkit-user-select: text;
+  user-select: text;
+}
+.meta-pair-input:focus { border-color: var(--gold); }
+.meta-pair-input::placeholder { color: var(--text3); }
+
+/* GPS bar */
+.gps-micro {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 20px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  font-size:12px;
+}
+.gps-micro-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--text3); transition: background .3s; flex-shrink: 0; }
+.gps-micro-dot.active { background: var(--green); }
+.gps-micro-text { color: var(--text3); letter-spacing: 1px; text-transform: uppercase; }
+.gps-micro-coords { color: var(--text2); font-family: monospace; font-size:12px; }
+
+/* ── RELOJ TOPBAR ── */
+.clock-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  padding: 0 20px;
+  border-left: 1px solid rgba(255,255,255,.08);
+  flex-shrink: 0;
+}
+.clock-time {
+  font-family: 'Morl', sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  color: #E8E5DC;
+  letter-spacing: 2px;
+  line-height: 1;
+}
+.clock-date {
+  font-size:11px;
+  letter-spacing: 2px;
+  color: rgba(255,255,255,.3);
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+.clock-arrived {
+  font-size:11px;
+  letter-spacing: 1px;
+  color: var(--gold);
+  margin-top: 1px;
+}
+
+/* ── EVALUACIÓN DE SERVICIO DE SALÓN ── */
+.salon-layout {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 0;
+  min-height: calc(100vh - 56px);
+}
+.salon-left {
+  padding: 28px 24px 80px;
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+}
+.salon-right {
+  background: var(--surface);
+  overflow-y: auto;
+  padding: 0;
+}
+
+/* Criterio de salón */
+.salon-criterio {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border2);
+  margin-bottom: 10px;
+  transition: border-left-color .3s;
+  position: relative;
+}
+.salon-criterio[data-score="5"] { border-left-color: var(--green2); }
+.salon-criterio[data-score="4"] { border-left-color: var(--green); }
+.salon-criterio[data-score="3"] { border-left-color: var(--yellow); }
+.salon-criterio[data-score="2"] { border-left-color: var(--orange); }
+.salon-criterio[data-score="1"] { border-left-color: var(--red); }
+
+.sc-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  cursor: pointer;
+  user-select: none;
+}
+.sc-num {
+  font-family: 'Morl', sans-serif;
+  font-weight: 900;
+  font-size: 24px;
+  color: var(--border2);
+  line-height: 1;
+  min-width: 28px;
+  flex-shrink: 0;
+}
+.sc-info { flex: 1; }
+.sc-title {
+  font-weight: 700;
+  font-size:14px;
+  color: var(--text);
+  line-height: 1.2;
+}
+.sc-subtitle {
+  font-size:12px;
+  color: var(--text3);
+  margin-top: 3px;
+  letter-spacing: .5px;
+}
+.sc-score-ring {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: border-color .3s;
+}
+.sc-score-n {
+  font-family: 'Morl', sans-serif;
+  font-weight: 900;
+  font-size: 16px;
+  line-height: 1;
+  color: var(--text);
+}
+.sc-score-lbl { font-size:11px; color: var(--text3); letter-spacing: 1px; }
+.sc-chevron {
+  width: 14px; height: 14px;
+  color: var(--text3);
+  transition: transform .2s;
+  flex-shrink: 0;
+}
+.salon-criterio.expanded .sc-chevron { transform: rotate(180deg); }
+
+.sc-body {
+  display: none;
+  padding: 0 16px 16px;
+  border-top: 1px solid var(--border);
+}
+.salon-criterio.expanded .sc-body { display: block; }
+
+/* Rubrica (tabla de criterios internos) */
+.rubrica {
+  margin-bottom: 14px;
+}
+.rubrica-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.rubrica-item:last-child { border-bottom: none; }
+.rubrica-texto {
+  flex: 1;
+  font-size:12px;
+  color: var(--text2);
+  line-height: 1.4;
+}
+.rubrica-peso {
+  font-size:12px;
+  color: var(--text3);
+  width: 30px;
+  text-align: right;
+  flex-shrink: 0;
+}
+/* rubrica-star eliminado — reemplazado por ECT */
+.ind-label {
+  font-size:11px;
+  letter-spacing: 2px;
+  color: var(--gold-dim);
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.ind-list { display: flex; flex-direction: column; gap: 5px; }
+.ind-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  font-size:12px;
+  color: var(--text2);
+  line-height: 1.4;
+}
+.ind-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--gold);
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+
+/* Obs textarea por criterio */
+.sc-obs {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'Morl', sans-serif;
+  font-size:12px;
+  padding: 7px 10px;
+  width: 100%;
+  outline: none;
+  resize: none;
+  height: 52px;
+  line-height: 1.5;
+  margin-top: 10px;
+  transition: border-color .2s;
+  -webkit-user-select: text;
+  user-select: text;
+}
+.sc-obs:focus { border-color: var(--gold); }
+.sc-obs::placeholder { color: var(--text3); }
+
+/* Timer de servicio */
+.timer-block {
+  background: var(--dark);
+  border: 1px solid var(--gold);
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.timer-display {
+  font-family: 'Morl', sans-serif;
+  font-weight: 900;
+  font-size: 32px;
+  color: var(--gold);
+  letter-spacing: 3px;
+  line-height: 1;
+}
+.timer-label { font-size:11px; letter-spacing: 2px; color: rgba(255,255,255,.4); text-transform: uppercase; margin-top: 3px; }
+.timer-btns { display: flex; gap: 7px; margin-left: auto; }
+.timer-btn {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,.2);
+  color: rgba(255,255,255,.6);
+  font-family: 'Morl', sans-serif;
+  font-size:12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: all .2s;
+}
+.timer-btn:hover { border-color: var(--gold); color: var(--gold); }
+.timer-btn.active { background: var(--gold); border-color: var(--gold); color: var(--dark); }
+
+/* Momento del servicio badge */
+.momento-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  font-size:12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  border: 1px solid;
+}
+
+@media (max-width: 1100px) {
+  .split-layout { grid-template-columns: 1fr; }
+  .split-right { border-top: 2px solid var(--gold); }
+  .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+  .salon-layout { grid-template-columns: 1fr; }
+  .salon-right { border-top: 2px solid var(--gold); }
+}
+@media (max-width: 768px) {
+  :root { --sidebar-w: 0px; }
+  .sidebar { transform: translateX(-100%); transition: transform .3s; width: 220px; }
+  .sidebar.open { transform: translateX(0); }
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ══ MODAL REPORTE AUDITORÍA ══ */
+.report-overlay {
+  position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.88);
+  z-index:99999;display:none;align-items:flex-start;
+  justify-content:center;padding:20px;overflow-y:auto;
+}
+.report-overlay.open { display:flex !important; }
+.report-modal {
+  background:#1A1917;border:1px solid rgba(196,146,42,.2);
+  border-radius:4px;width:100%;max-width:740px;margin:20px auto;position:relative;z-index:100000;
+}
+.report-header {
+  background:#111010;padding:18px 24px;
+  border-bottom:2px solid #C4922A;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.report-header h2 {font-size:13px;font-weight:700;color:#C4922A;letter-spacing:2px;text-transform:uppercase;}
+.report-body {padding:24px;}
+.report-close {background:transparent;border:none;color:rgba(250,250,247,.4);font-size:24px;cursor:pointer;line-height:1;padding:0 4px;}
+.report-close:hover {color:#FAFAF7;}
+.report-section {margin-bottom:24px;}
+.report-section-title {
+  font-size:10px;font-weight:700;letter-spacing:2px;
+  color:#C4922A;text-transform:uppercase;margin-bottom:12px;
+  padding-bottom:6px;border-bottom:1px solid rgba(196,146,42,.15);
+}
+.report-meta-grid {display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.report-meta-item {
+  display:flex;flex-direction:column;gap:3px;
+  background:rgba(255,255,255,.03);padding:10px 12px;border-radius:2px;
+  border:1px solid rgba(255,255,255,.06);
+}
+.report-meta-label {font-size:10px;color:rgba(250,250,247,.35);letter-spacing:1px;text-transform:uppercase;}
+.report-meta-value {font-size:13px;color:#FAFAF7;font-weight:500;}
+.report-item-card {
+  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);
+  padding:14px 16px;margin-bottom:10px;border-radius:2px;
+}
+.report-item-header {display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;}
+.report-item-name {font-size:14px;font-weight:600;color:#FAFAF7;}
+.report-item-score {font-size:22px;font-weight:900;}
+.report-criterios {display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;}
+.report-crit-chip {
+  font-size:11px;padding:3px 8px;border-radius:2px;
+  background:rgba(255,255,255,.04);color:rgba(250,250,247,.6);
+  border:1px solid rgba(255,255,255,.08);
+}
+.report-timer {font-size:11px;color:rgba(250,250,247,.4);font-family:monospace;margin-bottom:4px;}
+.report-obs {font-size:13px;color:rgba(250,250,247,.55);font-style:italic;margin-top:6px;}
+.report-foto-grid {display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px;}
+.report-foto-thumb {
+  width:100%;aspect-ratio:1;object-fit:cover;
+  border-radius:2px;border:1px solid rgba(255,255,255,.1);cursor:pointer;
+}
+.report-foto-admin {border:2px solid #C4922A !important;}
+.upload-zone {
+  border:2px dashed rgba(255,255,255,.12);border-radius:4px;
+  padding:20px;text-align:center;cursor:pointer;
+  transition:border-color .2s;margin-top:12px;
+}
+.upload-zone:hover {border-color:#C4922A;}
+.upload-zone-text {font-size:13px;color:rgba(250,250,247,.4);margin-top:8px;}
+.upload-btn {
+  background:#C4922A;border:none;color:#111010;
+  font-size:12px;font-weight:700;letter-spacing:1px;
+  padding:10px 20px;cursor:pointer;border-radius:2px;
+  text-transform:uppercase;margin-top:12px;width:100%;
+}
+.upload-btn:disabled {opacity:.4;cursor:not-allowed;}
+.report-score-big {
+  text-align:center;padding:20px;
+  background:rgba(255,255,255,.03);margin-bottom:20px;
+  border-radius:2px;border:1px solid rgba(255,255,255,.06);
+}
+.report-score-num {font-size:56px;font-weight:900;line-height:1;}
+.report-score-label {font-size:11px;letter-spacing:3px;text-transform:uppercase;margin-top:4px;}
+.report-conclusion {
+  background:rgba(196,146,42,.06);padding:14px 16px;
+  border-left:3px solid #C4922A;font-size:14px;
+  color:rgba(250,250,247,.7);line-height:1.6;border-radius:0 2px 2px 0;
+}
+.report-pdf-btn {
+  background:transparent;border:1px solid #C4922A;color:#C4922A;
+  font-size:11px;font-weight:700;padding:6px 14px;cursor:pointer;
+  border-radius:2px;letter-spacing:1px;
+}
+.report-pdf-btn:hover {background:rgba(196,146,42,.1);}
+
+
+/* Security: no user-select */
+* { -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
+input,textarea,[contenteditable] { -webkit-user-select:text; user-select:text; }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-brand" style="width:auto;padding:0 20px;gap:12px;">
+    <div style="width:40px;height:40px;border-radius:50%;overflow:hidden;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+      <img src="/logo-dmz.jpg" alt="DMZ" style="width:36px;height:36px;object-fit:cover;border-radius:50%;">
+    </div>
+    <div>
+      <div style="font-family:'Morl',sans-serif;font-weight:900;font-size:16px;letter-spacing:4px;color:var(--gold);text-transform:uppercase;line-height:1">DMZ AUDIT</div>
+      <div style="font-size:11px;letter-spacing:2px;color:rgba(255,255,255,.25);text-transform:uppercase;margin-top:3px">dmzkitchensupportaudit.com</div>
+    </div>
+  </div>
+  <div class="topbar-center">
+    <span class="topbar-title" id="view-title">Dashboard</span>
+    <div class="gps-pill">
+      <div class="gps-dot-tb" id="gps-dot-tb"></div>
+      <span id="gps-status-tb">GPS...</span>
+      <span id="gps-coords-tb" style="margin-left:4px;font-family:monospace;font-size:11px;"></span>
+    </div>
+  </div>
+  <div class="clock-block">
+    <div class="clock-time" id="clock-time">00:00:00</div>
+    <div class="clock-date" id="clock-date">—</div>
+    <div class="clock-arrived" id="clock-arrived"></div>
+  </div>
+  <div class="topbar-right">
+    <div class="session-info">
+      <span class="session-name" id="session-name">—</span>
+      <span class="session-role" id="session-role">—</span>
+    </div>
+    <button class="btn-logout" onclick="logout()">Salir</button>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+  <div class="nav-section-label">Módulos</div>
+
+  <a class="nav-item active" onclick="showView('dashboard')" id="nav-dashboard">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+      <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+    </svg>
+    Dashboard
+  </a>
+
+  <a class="nav-item" onclick="showView('evaluacion')" id="nav-evaluacion">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+    </svg>
+    Nueva Evaluación
+  </a>
+
+  <a class="nav-item" onclick="showView('salon')" id="nav-salon">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+      <circle cx="9" cy="7" r="4"/>
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+      <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+    </svg>
+    Evaluación de Salón
+  </a>
+
+  <a class="nav-item" onclick="showView('historial')" id="nav-historial">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+    </svg>
+    Historial
+  </a>
+
+  <a class="nav-item" onclick="showView('monitor')" id="nav-monitor">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+    </svg>
+    Monitoreo
+  </a>
+
+  <div class="nav-section-label" style="margin-top:8px">Cuenta</div>
+
+  <a class="nav-item" onclick="showView('ajustes')" id="nav-ajustes">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+    </svg>
+    Ajustes
+  </a>
+
+  <div class="sidebar-footer">
+    <div class="sf-label">Tenant</div>
+    <div class="sf-val" id="sf-tenant">—</div>
+    <div class="sf-label" style="margin-top:8px">dmzkitchensupportaudit.com</div>
+    <div class="sf-val" id="sf-session">—</div>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main-content">
+
+  <!-- ════ VIEW: DASHBOARD ════ -->
+  <div class="view active" id="view-dashboard">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Dashboard Operativo</div>
+        <div class="page-sub" id="dash-sub">Resumen de auditorías — cargando...</div>
+      </div>
+      <button class="btn-filter" onclick="showView('evaluacion')">+ Nueva Evaluación</button>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpi-grid">
+      <div class="kpi-card gold">
+        <span class="kpi-lbl">Total Auditorías</span>
+        <div class="kpi-val" id="kpi-total">—</div>
+        <div class="kpi-sub">registradas</div>
+      </div>
+      <div class="kpi-card green">
+        <span class="kpi-lbl">Promedio Global</span>
+        <div class="kpi-val" id="kpi-avg">—</div>
+        <div class="kpi-sub">/ 100 pts</div>
+      </div>
+      <div class="kpi-card blue">
+        <span class="kpi-lbl">Excelentes</span>
+        <div class="kpi-val" id="kpi-excelente">—</div>
+        <div class="kpi-sub">score ≥ 85</div>
+      </div>
+      <div class="kpi-card orange">
+        <span class="kpi-lbl">Regulares</span>
+        <div class="kpi-val" id="kpi-regular">—</div>
+        <div class="kpi-sub">score 55–70</div>
+      </div>
+      <div class="kpi-card red">
+        <span class="kpi-lbl">Críticos</span>
+        <div class="kpi-val" id="kpi-critico">—</div>
+        <div class="kpi-sub">score < 40</div>
+      </div>
+    </div>
+
+    <!-- Últimas auditorías -->
+    <div class="section-divider">
+      <span class="sd-label">Últimas Evaluaciones</span>
+      <div class="sd-line"></div>
+      <button class="btn-add-eval" onclick="showView('historial')">Ver todo</button>
+    </div>
+
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Establecimiento</th>
+            <th>Auditor</th>
+            <th>Fecha</th>
+            <th>Servicio</th>
+            <th>Score</th>
+            <th>Nivel</th>
+            <th>Timestamp</th>
+          </tr>
+        </thead>
+        <tbody id="dash-table-body">
+          <tr><td colspan="8" class="empty-state"><div class="e-icon">⏳</div><div class="e-text">Cargando auditorías...</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ════ VIEW: EVALUACIÓN ════ -->
+  <div class="view" id="view-evaluacion">
+    <div class="split-layout">
+
+      <!-- IZQUIERDA: Platillos -->
+      <div class="split-left">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Nueva Evaluación</div>
+            <div class="page-sub">Calificación de Alimentos · DMZ Audit</div>
+          </div>
+          <button class="btn-add-eval" onclick="addCard()">+ Agregar platillo</button>
+        </div>
+
+        <!-- Meta -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;background:var(--surface);border:1px solid var(--border);padding:16px;">
+          <div class="meta-pair">
+            <span class="meta-pair-label">Establecimiento</span>
+            <input class="meta-pair-input" id="m-est" placeholder="Nombre del restaurante">
+          </div>
+          <div class="meta-pair">
+            <span class="meta-pair-label">Auditor</span>
+            <input class="meta-pair-input" id="m-aud" placeholder="Nombre">
+          </div>
+          <div class="meta-pair">
+            <span class="meta-pair-label">Fecha</span>
+            <input class="meta-pair-input" id="m-fecha" type="date">
+          </div>
+          <div class="meta-pair">
+            <span class="meta-pair-label">Servicio</span>
+            <input class="meta-pair-input" id="m-srv" placeholder="Desayuno / Comida / Cena">
+          </div>
+        </div>
+
+        <!-- GPS micro -->
+        <div class="gps-micro">
+          <div class="gps-micro-dot" id="gps-micro-dot"></div>
+          <span class="gps-micro-text" id="gps-micro-text">GPS inicializando...</span>
+          <span class="gps-micro-coords" id="gps-micro-coords"></span>
+        </div>
+
+        <!-- Tarjetas -->
+        <div class="cards-col" id="cards-col" style="margin-top:16px;"></div>
+      </div>
+
+      <!-- DERECHA: Panel resumen + envío -->
+      <div class="split-right">
+        <div class="eval-header">
+          <div class="eval-title">Resumen · Envío</div>
+          <div class="eval-score-badge" id="global-num">—</div>
+        </div>
+        <div style="padding:16px;">
+          <div class="eval-panel">
+
+            <div class="panel-block">
+              <div class="panel-title">Resumen de Evaluación</div>
+              <div class="res-grid">
+                <div class="res-cell"><span class="res-lbl">Platillos</span><span class="res-val" id="r-total">0</span></div>
+                <div class="res-cell"><span class="res-lbl">Promedio</span><span class="res-val" id="r-prom">—</span></div>
+                <div class="res-cell"><span class="res-lbl">Calificación</span><span class="res-val" id="r-letra" style="font-size:26px">—</span></div>
+                <div class="res-cell"><span class="res-lbl">Nivel</span><span class="res-val" id="r-nivel" style="font-size:13px;letter-spacing:1px">—</span></div>
+              </div>
+              <div class="semaforo">
+                <div class="sem-dot" style="background:var(--red)"    id="sem-critico"></div>
+                <div class="sem-dot" style="background:var(--orange)" id="sem-deficiente"></div>
+                <div class="sem-dot" style="background:var(--yellow)" id="sem-regular"></div>
+                <div class="sem-dot" style="background:var(--green)"  id="sem-bueno"></div>
+                <div class="sem-dot" style="background:var(--green2)" id="sem-excelente"></div>
+              </div>
+              <div class="nivel-bar"><div class="nivel-needle" id="nivel-needle" style="left:50%"></div></div>
+            </div>
+
+            <div class="panel-block">
+              <div class="panel-title">Distribución por Nivel</div>
+              <div class="dist-list" id="dist-list"></div>
+            </div>
+
+            <div class="panel-block">
+              <div class="panel-title">Promedio por Criterio</div>
+              <div class="cs-list" id="cs-list"></div>
+            </div>
+
+            <div class="panel-block">
+              <div class="panel-title">Conclusión · Firma · Envío</div>
+              <textarea class="concl" id="conclusion" placeholder="Dictamen final y recomendaciones..."></textarea>
+              <div class="firmas">
+                <div class="firma">
+                  <div class="firma-lbl">Auditor DMZ</div>
+                  <input class="firma-inp" id="fa" placeholder="Nombre completo">
+                </div>
+                <div class="firma">
+                  <div class="firma-lbl">Chef / Responsable</div>
+                  <input class="firma-inp" id="fc" placeholder="Nombre completo">
+                </div>
+              </div>
+              <div class="sig-wrap">
+                <canvas class="sig-canvas" id="sig-canvas" width="280" height="64"></canvas>
+                <div class="sig-actions">
+                  <button class="sig-btn" onclick="clearSig()">Limpiar firma</button>
+                </div>
+              </div>
+              <div class="submit-status" id="submit-status">
+                <div class="spinner" id="spinner"></div>
+                <span id="submit-msg">Procesando...</span>
+              </div>
+              <button class="btn-act solid" id="btn-submit" onclick="submitAudit()">Enviar Evaluación Segura</button>
+              <button class="btn-act outline" onclick="limpiar()">Nueva Evaluación</button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ VIEW: HISTORIAL ════ -->
+  <div class="view" id="view-historial">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Historial de Auditorías</div>
+        <div class="page-sub">Registro completo · Trazabilidad permanente</div>
+      </div>
+      <button class="btn-filter" onclick="showView('evaluacion')">+ Nueva</button>
+    </div>
+
+    <div class="filters-bar">
+      <input class="f-input" id="f-search" placeholder="Buscar establecimiento..." style="width:200px" oninput="applyFilters()">
+      <select class="f-select" id="f-nivel" onchange="applyFilters()">
+        <option value="">Todos los niveles</option>
+        <option value="excelente">Excelente</option>
+        <option value="bueno">Bueno</option>
+        <option value="regular">Regular</option>
+        <option value="deficiente">Deficiente</option>
+        <option value="critico">Crítico</option>
+      </select>
+      <input class="f-input" id="f-from" type="date" style="width:140px" onchange="applyFilters()">
+      <input class="f-input" id="f-to"   type="date" style="width:140px" onchange="applyFilters()">
+      <button class="btn-filter outline" onclick="resetFilters()">Limpiar</button>
+    </div>
+
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>ID Auditoría</th>
+            <th>Establecimiento</th>
+            <th>Auditor</th>
+            <th>Fecha</th>
+            <th>Servicio</th>
+            <th>Platillos</th>
+            <th>Score</th>
+            <th>Nivel</th>
+            <th>GPS</th>
+            <th>Timestamp Servidor</th>
+          </tr>
+        </thead>
+        <tbody id="hist-table-body">
+          <tr><td colspan="10" class="empty-state"><div class="e-icon">⏳</div><div class="e-text">Cargando...</div></td></tr>
+        </tbody>
+      </table>
+      <div class="pagination">
+        <span class="page-info" id="page-info">—</span>
+        <div class="page-btns">
+          <button class="page-btn" id="btn-prev" onclick="changePage(-1)" disabled>← Anterior</button>
+          <button class="page-btn" id="btn-next" onclick="changePage(1)"  disabled>Siguiente →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ VIEW: AJUSTES ════ -->
+  <div class="view" id="view-ajustes">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Ajustes de Cuenta</div>
+        <div class="page-sub">Información del operador y tenant</div>
+      </div>
+    </div>
+    <div style="max-width:480px;display:flex;flex-direction:column;gap:12px;">
+      <div class="panel-block" style="background:var(--surface);border:1px solid var(--border);padding:20px;">
+        <div class="panel-title">Operador</div>
+        <div style="display:flex;flex-direction:column;gap:10px;" id="op-info"></div>
+      </div>
+      <div class="panel-block" style="background:var(--surface);border:1px solid var(--border);padding:20px;">
+        <div class="panel-title">Tenant</div>
+        <div style="display:flex;flex-direction:column;gap:10px;" id="tenant-info"></div>
+      </div>
+      <div class="panel-block" style="background:var(--surface);border:1px solid var(--border);padding:20px;">
+        <div class="panel-title">Credenciales de Acceso</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.8;">
+          <div>URL de acceso:</div>
+          <code style="background:var(--surface2);padding:4px 8px;font-size:12px;display:block;margin:4px 0;word-break:break-all;" id="login-url">—</code>
+          <div style="margin-top:8px;font-size:12px;color:var(--text3);">Comparte solo con operadores autorizados. Nunca compartas tu contraseña.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ VIEW: EVALUACIÓN DE SALÓN ════ -->
+  <div class="view" id="view-salon">
+    <div class="salon-layout">
+
+      <!-- IZQUIERDA: Criterios -->
+      <div class="salon-left">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Evaluación de Servicio de Salón</div>
+            <div class="page-sub">Auditoría F&B · Estándares de Calidad · De La Mora Zumarán Kitchen Support</div>
+          </div>
+        </div>
+
+        <!-- Meta del servicio -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;background:var(--surface);border:1px solid var(--border);padding:14px;">
+          <div class="meta-pair">
+            <span class="meta-pair-label">Establecimiento</span>
+            <input class="meta-pair-input" id="s-est" placeholder="Nombre">
+          </div>
+          <div class="meta-pair">
+            <span class="meta-pair-label">Auditor</span>
+            <input class="meta-pair-input" id="s-aud" placeholder="Nombre del auditor">
+          </div>
+          <div class="meta-pair">
+            <span class="meta-pair-label">Fecha</span>
+            <input class="meta-pair-input" id="s-fecha" type="date">
+          </div>
+          <div class="meta-pair">
+            <span class="meta-pair-label">Turno</span>
+            <select class="meta-pair-input" id="s-turno" style="appearance:none;cursor:pointer">
+              <option value="">Seleccionar...</option>
+              <option>Desayuno</option>
+              <option>Comida</option>
+              <option>Cena</option>
+              <option>Brunch</option>
+            </select>
+          </div>
+          <div class="meta-pair">
+            <span class="meta-pair-label">Mesa / Zona</span>
+            <input class="meta-pair-input" id="s-mesa" placeholder="Mesa #, zona o barra">
+          </div>
+          <div class="meta-pair">
+            <span class="meta-pair-label">Mesero evaluado</span>
+            <input class="meta-pair-input" id="s-mesero" placeholder="Nombre">
+          </div>
+        </div>
+
+        <!-- Timer de servicio -->
+        <div class="timer-block">
+          <div>
+            <div class="timer-display" id="salon-timer">00:00</div>
+            <div class="timer-label" id="timer-phase">Tiempo de servicio</div>
+          </div>
+          <div class="timer-btns">
+            <button class="timer-btn active" id="btn-timer-llegada" onclick="marcarMomento('llegada')">Llegada</button>
+            <button class="timer-btn" id="btn-timer-orden" onclick="marcarMomento('orden')">Orden</button>
+            <button class="timer-btn" id="btn-timer-alimentos" onclick="marcarMomento('alimentos')">Alimentos</button>
+            <button class="timer-btn" id="btn-timer-cuenta" onclick="marcarMomento('cuenta')">Cuenta</button>
+            <button class="timer-btn" id="btn-timer-reset" onclick="resetTimer()" style="border-color:var(--red);color:var(--red)">Reset</button>
+          </div>
+        </div>
+
+        <!-- ══════════════════════════════════
+             CRITERIO 1: SALUDO Y BIENVENIDA
+             ══════════════════════════════════ -->
+        <div class="salon-criterio" id="sc-1">
+          <div class="sc-header" onclick="toggleCriterio('sc-1')">
+            <span class="sc-num">01</span>
+            <div class="sc-info">
+              <div class="sc-title">Saludo y Bienvenida</div>
+              <div class="sc-subtitle">Primera impresión · Protocolo de recepción · Actitud de servicio</div>
+            </div>
+            <div class="sc-score-ring" id="ring-sc-1">
+              <span class="sc-score-n" id="score-sc-1">—</span>
+              <span class="sc-score-lbl">/ 5</span>
+            </div>
+            <svg class="sc-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="sc-body">
+            <div class="indicadores">
+              <div class="ind-label">Estándares F&B — Qué evaluar</div>
+              <div class="ind-list">
+                <div class="ind-item"><div class="ind-dot"></div>El mesero saluda en los primeros 60 segundos de que el cliente es sentado — estándar USPH y Forbes Travel Guide.</div>
+                <div class="ind-item"><div class="ind-dot"></div>Contacto visual, postura abierta y sonrisa genuina. Lenguaje corporal proyecta disposición, no urgencia.</div>
+                <div class="ind-item"><div class="ind-dot"></div>Bienvenida personalizada: menciona el nombre del restaurante / concepto. "Buenos días, bienvenidos a…"</div>
+                <div class="ind-item"><div class="ind-dot"></div>Si hay niños o personas mayores, el saludo los incluye. Diferenciación en el trato sin ser condescendiente.</div>
+                <div class="ind-item"><div class="ind-dot"></div>Presentación personal con nombre propio. Crea vínculo y aumenta la propina en un 23% (Cornell HRS, 2021).</div>
+              </div>
+            </div>
+            <div class="rubrica">
+              <div class="rubrica-item">
+                <span class="rubrica-texto">Tiempo de reacción ≤ 60 seg / saludo proactivo antes de ser solicitado</span>
+                <span class="rubrica-peso">20%</span>
+                <div class="ect-row" data-criterio="sc-1" data-sub="tiempo" style="max-width:200px"><div class="ect-btn v1" onclick="setSubStarECT('sc-1','tiempo',1,this)">1</div><div class="ect-btn v2" onclick="setSubStarECT('sc-1','tiempo',2,this)">2</div><div class="ect-btn v3" onclick="setSubStarECT('sc-1','tiempo',3,this)">3</div><div class="ect-btn v4" onclick="setSubStarECT('sc-1','tiempo',4,this)">4</div><div class="ect-btn v5" onclick="setSubStarECT('sc-1','tiempo',5,this)">5</div><div class="ect-btn v6" onclick="setSubStarECT('sc-1','tiempo',6,this)">6</div><div class="ect-btn v7" onclick="setSubStarECT('sc-1','tiempo',7,this)">7</div><div class="ect-btn v8" onclick="setSubStarECT('sc-1','tiempo',8,this)">8</div><div class="ect-btn v9" onclick="setSubStarECT('sc-1','tiempo',9,this)">9</div><div class="ect-btn v10" onclick="setSubStarECT('sc-1','tiempo',10,this)">10</div></div>
+              </div>
+              <div class="rubrica-item">
+                <span class="rubrica-texto">Calidad del saludo: verbal, contacto visual y lenguaje corporal positivo</span>
+                <span class="rubrica-peso">30%</span>
+                <div class="ect-row" data-criterio="sc-1" data-sub="calidad" style="max-width:200px"><div class="ect-btn v1" onclick="setSubStarECT('sc-1','calidad',1,this)">1</div><div class="ect-btn v2" onclick="setSubStarECT('sc-1','calidad',2,this)">2</div><div class="ect-btn v3" onclick="setSubStarECT('sc-1','calidad',3,this)">3</div><div class="ect-btn v4" onclick="setSubStarECT('sc-1','calidad',4,this)">4</div><div class="ect-btn v5" onclick="setSubStarECT('sc-1','calidad',5,this)">5</div><div class="ect-btn v6" onclick="setSubStarECT('sc-1','calidad',6,this)">6</div><div class="ect-btn v7" onclick="setSubStarECT('sc-1','calidad',7,this)">7</div><div class="ect-btn v8" onclick="setSubStarECT('sc-1','calidad',8,this)">8</div><div class="ect-btn v9" onclick="setSubStarECT('sc-1','calidad',9,this)">9</div><div class="ect-btn v10" onclick="setSubStarECT('sc-1','calidad',10,this)">10</div></div>
+              </div>
+              <div class="rubrica-item">
+                <span class="rubrica-texto">Presentación personal con nombre / personalización del servicio</span>
+                <span class="rubrica-peso">25%</span>
+                <div class="ect-row" data-criterio="sc-1" data-sub="presentacion" style="max-width:200px"><div class="ect-btn v1" onclick="setSubStarECT('sc-1','presentacion',1,this)">1</div><div class="ect-btn v2" onclick="setSubStarECT('sc-1','presentacion',2,this)">2</div><div class="ect-btn v3" onclick="setSubStarECT('sc-1','presentacion',3,this)">3</div><div class="ect-btn v4" onclick="setSubStarECT('sc-1','presentacion',4,this)">4</div><div class="ect-btn v5" onclick="setSubStarECT('sc-1','presentacion',5,this)">5</div><div class="ect-btn v6" onclick="setSubStarECT('sc-1','presentacion',6,this)">6</div><div class="ect-btn v7" onclick="setSubStarECT('sc-1','presentacion',7,this)">7</div><div class="ect-btn v8" onclick="setSubStarECT('sc-1','presentacion',8,this)">8</div><div class="ect-btn v9" onclick="setSubStarECT('sc-1','presentacion',9,this)">9</div><div class="ect-btn v10" onclick="setSubStarECT('sc-1','presentacion',10,this)">10</div></div>
+              </div>
+              <div class="rubrica-item">
+                <span class="rubrica-texto">Entrega de menú / carta con protocolo: abierto, dama primero, postura</span>
+                <span class="rubrica-peso">25%</span>
+                <div class="ect-row" data-criterio="sc-1" data-sub="menu" style="max-width:200px"><div class="ect-btn v1" onclick="setSubStarECT('sc-1','menu',1,this)">1</div><div class="ect-btn v2" onclick="setSubStarECT('sc-1','menu',2,this)">2</div><div class="ect-btn v3" onclick="setSubStarECT('sc-1','menu',3,this)">3</div><div class="ect-btn v4" onclick="setSubStarECT('sc-1','menu',4,this)">4</div><div class="ect-btn v5" onclick="setSubStarECT('sc-1','menu',5,this)">5</div><div class="ect-btn v6" onclick="setSubStarECT('sc-1','menu',6,this)">6</div><div class="ect-btn v7" onclick="setSubStarECT('sc-1','menu',7,this)">7</div><div class="ect-btn v8" onclick="setSubStarECT('sc-1','menu',8,this)">8</div><div class="ect-btn v9" onclick="setSubStarECT('sc-1','menu',9,this)">9</div><div class="ect-btn v10" onclick="setSubStarECT('sc-1','menu',10,this)">10</div></div>
+              </div>
+            </div>
+            <textarea class="sc-obs" id="obs-sc-1" placeholder="Observaciones específicas de saludo y bienvenida…"></textarea>
+          </div>
+        </div>
+
+        <!-- ══════════════════════════════════
+             CRITERIO 2: SECUENCIA DE SERVICIO
+             ══════════════════════════════════ -->
+        <div class="salon-criterio" id="sc-2">
+          <div class="sc-header" onclick="toggleCriterio('sc-2')">
+            <span class="sc-num">02</span>
+            <div class="sc-info">
+              <div class="sc-title">Secuencia de Servicio</div>
+              <div class="sc-subtitle">Flujo de la experiencia · Timing · Mise en place · Protocolo de mesa</div>
+            </div>
+            <div class="sc-score-ring" id="ring-sc-2">
+              <span class="sc-score-n" id="score-sc-2">—</span>
+              <span class="sc-score-lbl">/ 5</span>
+            </div>
+            <svg class="sc-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="sc-body">
+            <div class="indicadores">
+              <div class="ind-label">Estándares F&B — Qué evaluar</div>
+              <div class="ind-list">
+                <div class="ind-item"><div class="ind-dot"></div>Secuencia correcta: agua → bebida → orden → entrada → plato fuerte → postre → digestivo → cuenta. Cada etapa tiene un tiempo ideal.</div>
+                <div class="ind-item"><div class="ind-dot"></div>Tiempo de entrega de bebidas: ≤ 3 min. Entradas: ≤ 10 min. Plato fuerte: ≤ 18 min. Cualquier demora requiere comunicación proactiva.</div>
+                <div class="ind-item"><div class="ind-dot"></div>Servicio por la derecha para alimentos sólidos, por la izquierda para bebidas (protocolo estándar AMRESTORAN / NRA). Sin cruzar el brazo sobre el cliente.</div>
+                <div class="ind-item"><div class="ind-dot"></div>Check-back obligatorio: revisitar la mesa en los primeros 2 bocados — "¿Todo está a su gusto?" Demuestra ownership del servicio.</div>
+                <div class="ind-item"><div class="ind-dot"></div>Debarrazar con permiso verbal, nunca arrebatar platos. Sincronización del equipo para servir simultáneamente a toda la mesa.</div>
+              </div>
+            </div>
+            <div class="rubrica">
+              <div class="rubrica-item">
+                <span class="rubrica-texto">Orden lógico y flujo correcto de la secuencia de servicio completa</span>
+                <span class="rubrica-peso">25%</span>
+                <div class="ect-row" data-criterio="sc-2" data-sub="flujo" style="max-width:200px"><div class="ect-btn v1" onclick="setSubStarECT('sc-2','flujo',1,this)">1</div><div class="ect-btn v2" onclick="setSubStarECT('sc-2','flujo',2,this)">2</div><div class="ect-btn v3" onclick="setSubStarECT('sc-2','flujo',3,this)">3</div><div class="ect-btn v4" onclick="setSubStarECT('sc-2','flujo',4,this)">4</div><div class="ect-btn v5" onclick="setSubStarECT('sc-2','flujo',5,this)">5</div><div class="ect-btn v6" onclick="setSubStarECT('sc-2','flujo',6,this)">6</div><div class="ect-btn v7" onclick="setSubStarECT('sc-2','flujo',7,this)">7</div><div class="ect-btn v8" onclick="setSubStarECT('sc-2','flujo',8,this)">8</div><div class="ect-btn v9" onclick="setSubStarECT('sc-2','flujo',9,this)">9</div><div class="ect-btn v10" onclick="setSubStarECT('sc-2','flujo',10,this)">10</div></div>
+              </div>
+              <div class="rubrica-item">
+                <span class="rubrica-texto">Timing y tiempos de entrega dentro de los estándares establecidos</span>
+                <span class="rubrica-peso">30%</span>
+                <div class="ect-row" data-criterio="sc-2" data-sub="timing" style="max-width:200px"><div class="ect-btn v1" onclick="setSubStarECT('sc-2','timing',1,this)">1</div><div class="ect-btn v2" onclick="setSubStarECT('sc-2','timing',2,this)">2</div><div class="ect-btn v3" onclick="setSubStarECT('sc-2','timing',3,this)">3</div><div class="ect-btn v4" onclick="setSubStarECT('sc-2','timing',4,this)">4</div><div class="ect-btn v5" onclick="setSubStarECT('sc-2','timing',5,this)">5</div><div class="ect-btn v6" onclick="setSubStarECT('sc-2','timing',6,this)">6</div><div class="ect-btn v7" onclick="setSubStarECT('sc-2','timing',7,this)">7</div><div class="ect-btn v8" onclick="setSubStarECT('sc-2','timing',8,this)">8</div><div class="ect-btn v9" onclick="setSubStarECT('sc-2','timing',9,this)">9</div><div class="ect-btn v10" onclick="setSubStarECT('sc-2','timing',10,this)">10</div></div>
+              </div>
+              <div class="rubrica-item">
+                <span class="rubrica-texto">Protocolo de servicio: por qué lado, postura, sincronización del equipo</span>
+                <span class="rubrica-peso">25%</span>
+                <div class="ect-row" data-criterio="sc-2" data-sub="protocolo" style="max-width:200px"><div class="ect-btn v1" onclick="setSubStarECT('sc-2','protocolo',1,this)">1</div><div class="ect-btn v2" onclick="setSubStarECT('sc-2','protocolo',2,this)">2</div><div class="ect-btn v3" onclick="setSubStarECT('sc-2','protocolo',3,this)">3</div><div class="ect-btn v4" onclick="setSubStarECT('sc-2','protocolo',4,this)">4</div><div class="ect-btn v5" onclick="setSubStarECT('sc-2','protocolo',5,this)">5</div><div class="ect-btn v6" onclick="setSubStarECT('sc-2','protocolo',6,this)">6</div><div class="ect-btn v7" onclick="setSubStarECT('sc-2','protocolo',7,this)">7</div><div class="ect-btn v8" onclick="setSubStarECT('sc-2','protocolo',8,this)">8</div><div class="ect-btn v9" onclick="setSubStarECT('sc-2','protocolo',9,this)">9</div><div class="ect-btn v10" onclick="setSubStarECT('sc-2','protocolo',10,this)">10</div></div>
+              </div>
+              <div class="rubrica-item">
+                <span class="rubrica-texto">Check-back y debarrizado con protocolo correcto y permiso verbal</span>
+                <span class="rubrica-peso">20%</span>
+                <div class="ect-row" data-criterio="sc-2" data-sub="checkback" style="max-width:200px"><div class="ect-btn v1" onclick="setSubStarECT('sc-2','checkback',1,this)">1</div><div class="ect-btn v2" onclick="setSubStarECT('sc-2','checkback',2,this)">2</div><div class="ect-btn v3" onclick="setSubStarECT('sc-2','checkback',3,this)">3</div><div class="ect-btn v4" onclick="setSubStarECT('sc-2','checkback',4,this)">4</div><div class="ect-btn v5" onclick="setSubStarECT('sc-2','checkback',5,this)">5</div><div class="ect-btn v6" onclick="setSubStarECT('sc-2','checkback',6,this)">6</div><div class="ect-btn v7" onclick="setSubStarECT('sc-2','checkback',7,this)">7</div><div class="ect-btn v8" onclick="setSubStarECT('sc-2','checkback',8,this)">8</div><div class="ect-btn v9" onclick="setSubStarECT('sc-2','checkback',9,this)">9</div><div class="ect-btn v10" onclick="setSubStarECT('sc-2','checkback',10,this)">10</div></div>
+              </div>
+            </div>
+            <textarea class="sc-obs" id="obs-sc-2" placeholder="Observaciones sobre la secuencia de servicio…"></textarea>
+          </div>
+        </div>
+
+        <!-- ══════════════════════════════════
+             CRITERIO 3: CONOCIMIENTO DE MENÚ
+             ══════════════════════════════════ -->
+        <div class="salon-criterio" id="sc-3">
+          <div class="sc-header" onclick="toggleCriterio('sc-3')">
+            <span class="sc-num">03</span>
+            <div class="sc-info">
+              <div class="sc-title">Conocimiento de Menú</div>
+              <div class="sc-subtitle">Product knowledge · Ingredientes · Alérgenos · Maridaje · Técnicas</div>
+            </div>
+            <div class="sc-score-ring" id="ring-sc-3">
+              <span class="sc-score-n" id="score-sc-3">—</span>
+              <span class="sc-score-lbl">/ 5</span>
+            </div>
+            <svg class="sc-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="sc-body">
+            <div class="indicadores">
+              <div class="ind-label">Estándares F&B — Qué evaluar</div>
+              <div class="ind-list">
+                <div class="ind-item"><div class="ind-dot"></div>Conocimiento de los 14 alérgenos mayores (Reglamento UE 1169/2011). El mesero debe responder sin dudar o consultar internamente en ≤ 30 seg.</div>
+                <div class="ind-item"><div class="ind-dot"></div>Descripción sensorial de los platillos: puede hablar de sabores, texturas, técnicas de cocción y presentación sin leer la carta.</div>
+                <div class="ind-item"><div class="ind-dot"></div>Conocimiento de maridaje básico: vino / platillo, cocteles / cocina. Puede sugerir con argumentos, no solo por precio.</div>
+                <div class="ind-item"><div class="ind-dot"></div>Manejo de preguntas difíciles: restricciones dietéticas (vegano, sin gluten, kosher). Ofrece alternativas reales, no evasivas.</div>
+                <div class="ind-item"><div class="ind-dot"></div>Conoce los especiales del día, las 86 (platillos sin existencia) y las novedades de temporada antes de que el cliente pregunte.</div>
+              </div>
+            </div>
+            <div class="rubrica">
+              <div class="rubrica-item">
+                <span class="rubrica-texto">Dominio de ingredientes, técnicas y descripción sensorial de platillos</span>
+                <span class="rubrica-peso">30%</span>
+                <div class="ect-row" data-criterio="sc-3" data-sub="ingredientes" style="max-width:200px"><div class="ect-btn v1" onclick="setSubStarECT('sc-3','ingredientes',1,this)">1</div><div class="ect-btn v2" onclick="setSubStarECT('sc-3','ingredientes',2,this)">2</div><div class="ect-btn v3" onclick="setSubStarECT('sc-3','ingredientes',3,this)">3</div><div class="ect-btn v4" onclick="setSubStarECT('sc-3','ingredientes',4,this)">4</div><div class="ect-btn v5" onclick="setSubStarECT('sc-3','ingredientes',5,this)">5</div><div class="ect-btn v6" onclick="setSubStarECT('sc-3','ingredientes',6,this)">6</div><div class="ect-btn v7" onclick="setSubStarECT('sc-3','ingredientes',7,this)">7</div><div class="ect-btn v8" onclick="setSubStarECT('sc-3','ingredientes',8,this)">8</div><div class="ect-btn v9" onclick="setSubStarECT('sc-3','ingredientes',9,this)">9</div><div class="ect-btn v10" onclick="setSubStarECT('sc-3','ingredientes',10,this)">10</div></div>
+              </div>
+              <div class="rubrica-item">
+                <span class="rubrica-texto">Manejo de alérgenos y restricciones dietéticas con seguridad y precisión</span>
+                <span class="rubrica-peso">30%</span>
+                <div class="ect-row" data-criterio="sc-3" data-sub="alergenos" style="max-width:200px"><div class="ect-btn v1" onclick="setSubStarECT('sc-3','alergenos',1,this)">1</div><div class="ect-btn v2" onclick="setSubStarECT('sc-3','alergenos',2,this)">2</div><div class="ect-btn v3" onclick="setSubStarECT('sc-3','alergenos',3,this)">3</div><div class="ect-btn v4" onclick="setSubStarECT('sc-3','alergenos',4,this)">4</div><div class="ect-btn v5" onclick="setSubStarECT('sc-3','alergenos',5,this)">5</div><div class="ect-btn v6" onclick="setSubStarECT('sc-3','alergenos',6,this)">6</div><div class="ect-btn v7" onclick="setSubStarECT('sc-3','alergenos',7,this)">7</div><div class="ect-btn v8" onclick="setSubStarECT('sc-3','alergenos',8,this)">8</div><div class="ect-btn v9" onclick="setSubStarECT('sc-3','alergenos',9,this)">9</div><div class="ect-btn v10" onclick="setSubStarECT('sc-3','alergenos',10,this)">10</div></div>
+              </div>
+              <div class="rubrica-item">
+                <span class="rubrica-texto">Conocimiento de maridaje y capacidad de recomendar con criterio</span>
+                <span class="rubrica-peso">20%</span>
+                <div class="ect-row" data-criterio="sc-3" data-sub="maridaje" style="max-width:200px"><div class="ect-btn v1" onclick="setSubStarECT('sc-3','maridaje',1,this)">1</div><div class="ect-btn v2" onclick="setSubStarECT('sc-3','maridaje',2,this)">2</div><div class="ect-btn v3" onclick="setSubStarECT('sc-3','maridaje',3,this)">3</div><div class="ect-btn v4" onclick="setSubStarECT('sc-3','maridaje',4,this)">4</div><div class="ect-btn v5" onclick="setSubStarECT('sc-3','maridaje',5,this)">5</div><div class="ect-btn v6" onclick="setSubStarECT('sc-3','maridaje',6,this)">6</div><div class="ect-btn v7" onclick="setSubStarECT('sc-3','maridaje',7,this)">7</div><div class="ect-btn v8" onclick="setSubStarECT('sc-3','maridaje',8,this)">8</div><div class="ect-btn v9" onclick="setSubStarECT('sc-3','maridaje',9,this)">9</div><div class="ect-btn v10" onclick="setSubStarECT('sc-3','maridaje',10,this)">10</div></div>
+              </div>
+              <div class="rubrica-item">
+                <span class="rubrica-texto">Conoce especiales, 86s y novedades del día sin consultar a cocina</span>
+                <span class="rubrica-peso">20%</span>
+                <div class="ect-row" data-criterio="sc-3" data-sub="especiales" style="max-width:200px"><div class="ect-btn v1" onclick="setSubStarECT('sc-3','especiales',1,this)">1</div><div class="ect-btn v2" onclick="setSubStarECT('sc-3','especiales',2,this)">2</div><div class="ect-btn v3" onclick="setSubStarECT('sc-3','especiales',3,this)">3</div><div class="ect-btn v4" onclick="setSubStarECT('sc-3','especiales',4,this)">4</div><div class="ect-btn v5" onclick="setSubStarECT('sc-3','especiales',5,this)">5</div><div class="ect-btn v6" onclick="setSubStarECT('sc-3','especiales',6,this)">6</div><div class="ect-btn v7" onclick="setSubStarECT('sc-3','especiales',7,this)">7</div><div class="ect-btn v8" onclick="setSubStarECT('sc-3','especiales',8,this)">8</div><div class="ect-btn v9" onclick="setSubStarECT('sc-3','especiales',9,this)">9</div><div class="ect-btn v10" onclick="setSubStarECT('sc-3','especiales',10,this)">10</div></div>
+              </div>
+            </div>
+            <textarea class="sc-obs" id="obs-sc-3" placeholder="Observaciones sobre conocimiento de menú…"></textarea>
+          </div>
+        </div>
+
+        <!-- ══════════════════════════════════
+             CRITERIO 4: CLIENTE REDONDO
+             ══════════════════════════════════ -->
+        <div class="salon-criterio" id="sc-4">
+          <div class="sc-header" onclick="toggleCriterio('sc-4')">
+            <span class="sc-num">04</span>
+            <div class="sc-info">
+              <div class="sc-title">Cliente Redondo</div>
+              <div class="sc-subtitle">Satisfacción 360° · Manejo de objeciones · Recuperación del servicio · Fidelización</div>
+            </div>
+            <div class="sc-score-ring" id="ring-sc-4">
+              <span class="sc-score-n" id="score-sc-4">—</span>
+              <span class="sc-score-lbl">/ 5</span>
+            </div>
+            <svg class="sc-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="sc-body">
+            <div class="indicadores">
+              <div class="ind-label">Estándares F&B — Qué evaluar</div>
+              <div class="ind-list">
+                <div class="ind-item"><div class="ind-dot"></div>"Cliente redondo" = atención integral desde que llega hasta que sale. El mesero es el dueño de la experiencia completa de esa mesa.</div>
+                <div class="ind-item"><div class="ind-dot"></div>Anticipación de necesidades: reponer agua sin que se solicite, ofrecer más pan, retirar platos vacíos, limpiar migas. Servicio invisible pero perceptible.</div>
+                <div class="ind-item"><div class="ind-dot"></div>Manejo de quejas con el protocolo LAST (Listen, Apologize, Solve, Thank). Nunca se discute, nunca se escuda en cocina o colegas.</div>
+                <div class="ind-item"><div class="ind-dot"></div>Cierre de la experiencia: despedida personal, invitación a regresar, verificar satisfacción antes de que el cliente salga. La última impresión es la más duradera.</div>
+                <div class="ind-item"><div class="ind-dot"></div>Personalización de detalles memorables: cumpleaños, aniversarios, preferencias recordadas. Net Promoter Score (NPS) se mueve por estas acciones.</div>
+              </div>
+            </div>
+            <div class="rubrica">
+              <div class="rubrica-item">
+                <span class="rubrica-texto">Anticipación de necesidades sin que el cliente solicite — servicio proactivo</span>
+                <span class="rubrica-peso">25%</span>
+                <div class="ect-row" data-criterio="sc-4" data-sub="anticipacion" style="max-width:200px"><div class="ect-btn v1" onclick="setSubStarECT('sc-4','anticipacion',1,this)">1</div><div class="ect-btn v2" onclick="setSubStarECT('sc-4','anticipacion',2,this)">2</div><div class="ect-btn v3" onclick="setSubStarECT('sc-4','anticipacion',3,this)">3</div><div class="ect-btn v4" onclick="setSubStarECT('sc-4','anticipacion',4,this)">4</div><div class="ect-btn v5" onclick="setSubStarECT('sc-4','anticipacion',5,this)">5</div><div class="ect-btn v6" onclick="setSubStarECT('sc-4','anticipacion',6,this)">6</div><div class="ect-btn v7" onclick="setSubStarECT('sc-4','anticipacion',7,this)">7</div><div class="ect-btn v8" onclick="setSubStarECT('sc-4','anticipacion',8,this)">8</div><div class="ect-btn v9" onclick="setSubStarECT('sc-4','anticipacion',9,this)">9</div><div class="ect-btn v10" onclick="setSubStarECT('sc-4','anticipacion',10,this)">10</div></div>
+              </div>
+              <div class="rubrica-item">
+                <span class="rubrica-texto">Manejo de quejas y objeciones con protocolo LAST — empático y resolutivo</span>
+                <span class="rubrica-peso">30%</span>
+                <div class="ect-row" data-criterio="sc-4" data-sub="quejas" style="max-width:200px"><div class="ect-btn v1" onclick="setSubStarECT('sc-4','quejas',1,this)">1</div><div class="ect-btn v2" onclick="setSubStarECT('sc-4','quejas',2,this)">2</div><div class="ect-btn v3" onclick="setSubStarECT('sc-4','quejas',3,this)">3</div><div class="ect-btn v4" onclick="setSubStarECT('sc-4','quejas',4,this)">4</div><div class="ect-btn v5" onclick="setSubStarECT('sc-4','quejas',5,this)">5</div><div class="ect-btn v6" onclick="setSubStarECT('sc-4','quejas',6,this)">6</div><div class="ect-btn v7" onclick="setSubStarECT('sc-4','quejas',7,this)">7</div><div class="ect-btn v8" onclick="setSubStarECT('sc-4','quejas',8,this)">8</div><div class="ect-btn v9" onclick="setSubStarECT('sc-4','quejas',9,this)">9</div><div class="ect-btn v10" onclick="setSubStarECT('sc-4','quejas',10,this)">10</div></div>
+              </div>
+              <div class="rubrica-item">
+                <span class="rubrica-texto">Cierre y despedida de calidad: verificación de satisfacción e invitación a regresar</span>
+                <span class="rubrica-peso">25%</span>
+                <div class="ect-row" data-criterio="sc-4" data-sub="cierre" style="max-width:200px"><div class="ect-btn v1" onclick="setSubStarECT('sc-4','cierre',1,this)">1</div><div class="ect-btn v2" onclick="setSubStarECT('sc-4','cierre',2,this)">2</div><div class="ect-btn v3" onclick="setSubStarECT('sc-4','cierre',3,this)">3</div><div class="ect-btn v4" onclick="setSubStarECT('sc-4','cierre',4,this)">4</div><div class="ect-btn v5" onclick="setSubStarECT('sc-4','cierre',5,this)">5</div><div class="ect-btn v6" onclick="setSubStarECT('sc-4','cierre',6,this)">6</div><div class="ect-btn v7" onclick="setSubStarECT('sc-4','cierre',7,this)">7</div><div class="ect-btn v8" onclick="setSubStarECT('sc-4','cierre',8,this)">8</div><div class="ect-btn v9" onclick="setSubStarECT('sc-4','cierre',9,this)">9</div><div class="ect-btn v10" onclick="setSubStarECT('sc-4','cierre',10,this)">10</div></div>
+              </div>
+              <div class="rubrica-item">
+                <span class="rubrica-texto">Personalización y detalles memorables: cumpleaños, preferencias, atenciones especiales</span>
+                <span class="rubrica-peso">20%</span>
+                <div class="ect-row" data-criterio="sc-4" data-sub="personalizacion" style="max-width:200px"><div class="ect-btn v1" onclick="setSubStarECT('sc-4','personalizacion',1,this)">1</div><div class="ect-btn v2" onclick="setSubStarECT('sc-4','personalizacion',2,this)">2</div><div class="ect-btn v3" onclick="setSubStarECT('sc-4','personalizacion',3,this)">3</div><div class="ect-btn v4" onclick="setSubStarECT('sc-4','personalizacion',4,this)">4</div><div class="ect-btn v5" onclick="setSubStarECT('sc-4','personalizacion',5,this)">5</div><div class="ect-btn v6" onclick="setSubStarECT('sc-4','personalizacion',6,this)">6</div><div class="ect-btn v7" onclick="setSubStarECT('sc-4','personalizacion',7,this)">7</div><div class="ect-btn v8" onclick="setSubStarECT('sc-4','personalizacion',8,this)">8</div><div class="ect-btn v9" onclick="setSubStarECT('sc-4','personalizacion',9,this)">9</div><div class="ect-btn v10" onclick="setSubStarECT('sc-4','personalizacion',10,this)">10</div></div>
+              </div>
+            </div>
+            <textarea class="sc-obs" id="obs-sc-4" placeholder="Observaciones sobre atención integral al cliente…"></textarea>
+          </div>
+        </div>
+
+        <!-- ══════════════════════════════════
+             CRITERIO 5: VENTA SUGESTIVA
+             ══════════════════════════════════ -->
+        <div class="salon-criterio" id="sc-5">
+          <div class="sc-header" onclick="toggleCriterio('sc-5')">
+            <span class="sc-num">05</span>
+            <div class="sc-info">
+              <div class="sc-title">Venta Sugestiva</div>
+              <div class="sc-subtitle">Upselling · Cross-selling · Ticket promedio · Técnica consultiva · Sin presión</div>
+            </div>
+            <div class="sc-score-ring" id="ring-sc-5">
+              <span class="sc-score-n" id="score-sc-5">—</span>
+              <span class="sc-score-lbl">/ 5</span>
+            </div>
+            <svg class="sc-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="sc-body">
+            <div class="indicadores">
+              <div class="ind-label">Estándares F&B — Qué evaluar</div>
+              <div class="ind-list">
+                <div class="ind-item"><div class="ind-dot"></div>Upselling correcto: "¿Le gustaría una copa de vino de la casa para acompañar? Tenemos un Tempranillo que va perfecto con su elección." — no "¿Algo para tomar?"</div>
+                <div class="ind-item"><div class="ind-dot"></div>Cross-selling sin presión: ofrece complementos naturales (guarniciones, salsas especiales, extras) en el momento correcto de la secuencia.</div>
+                <div class="ind-item"><div class="ind-dot"></div>Siempre sugiere usando lenguaje descriptivo y sensorial, nunca precio como primer argumento. "Es cremoso, con notas a vainilla…" antes de "cuesta $X".</div>
+                <div class="ind-item"><div class="ind-dot"></div>Ofrece postre y digestivos ANTES de traer la cuenta. El 68% de los clientes acepta postre si se ofrece con descripción (NRA Study 2022).</div>
+                <div class="ind-item"><div class="ind-dot"></div>No vende con desesperación ni presiona. La venta sugestiva profesional se siente como una recomendación de amigo experto, nunca de vendedor.</div>
+              </div>
+            </div>
+            <div class="rubrica">
+              <div class="rubrica-item">
+                <span class="rubrica-texto">Técnica de upselling: ofrece mejoras con argumentos sensoriales y contexto</span>
+                <span class="rubrica-peso">25%</span>
+                <div class="ect-row" data-criterio="sc-5" data-sub="upselling" style="max-width:200px"><div class="ect-btn v1" onclick="setSubStarECT('sc-5','upselling',1,this)">1</div><div class="ect-btn v2" onclick="setSubStarECT('sc-5','upselling',2,this)">2</div><div class="ect-btn v3" onclick="setSubStarECT('sc-5','upselling',3,this)">3</div><div class="ect-btn v4" onclick="setSubStarECT('sc-5','upselling',4,this)">4</div><div class="ect-btn v5" onclick="setSubStarECT('sc-5','upselling',5,this)">5</div><div class="ect-btn v6" onclick="setSubStarECT('sc-5','upselling',6,this)">6</div><div class="ect-btn v7" onclick="setSubStarECT('sc-5','upselling',7,this)">7</div><div class="ect-btn v8" onclick="setSubStarECT('sc-5','upselling',8,this)">8</div><div class="ect-btn v9" onclick="setSubStarECT('sc-5','upselling',9,this)">9</div><div class="ect-btn v10" onclick="setSubStarECT('sc-5','upselling',10,this)">10</div></div>
+              </div>
+              <div class="rubrica-item">
+                <span class="rubrica-texto">Cross-selling natural: complementos, maridaje y extras en el momento correcto</span>
+                <span class="rubrica-peso">25%</span>
+                <div class="ect-row" data-criterio="sc-5" data-sub="crossselling" style="max-width:200px"><div class="ect-btn v1" onclick="setSubStarECT('sc-5','crossselling',1,this)">1</div><div class="ect-btn v2" onclick="setSubStarECT('sc-5','crossselling',2,this)">2</div><div class="ect-btn v3" onclick="setSubStarECT('sc-5','crossselling',3,this)">3</div><div class="ect-btn v4" onclick="setSubStarECT('sc-5','crossselling',4,this)">4</div><div class="ect-btn v5" onclick="setSubStarECT('sc-5','crossselling',5,this)">5</div><div class="ect-btn v6" onclick="setSubStarECT('sc-5','crossselling',6,this)">6</div><div class="ect-btn v7" onclick="setSubStarECT('sc-5','crossselling',7,this)">7</div><div class="ect-btn v8" onclick="setSubStarECT('sc-5','crossselling',8,this)">8</div><div class="ect-btn v9" onclick="setSubStarECT('sc-5','crossselling',9,this)">9</div><div class="ect-btn v10" onclick="setSubStarECT('sc-5','crossselling',10,this)">10</div></div>
+              </div>
+              <div class="rubrica-item">
+                <span class="rubrica-texto">Oferta de postre y digestivo antes de presentar la cuenta — con descripción</span>
+                <span class="rubrica-peso">25%</span>
+                <div class="ect-row" data-criterio="sc-5" data-sub="postre" style="max-width:200px"><div class="ect-btn v1" onclick="setSubStarECT('sc-5','postre',1,this)">1</div><div class="ect-btn v2" onclick="setSubStarECT('sc-5','postre',2,this)">2</div><div class="ect-btn v3" onclick="setSubStarECT('sc-5','postre',3,this)">3</div><div class="ect-btn v4" onclick="setSubStarECT('sc-5','postre',4,this)">4</div><div class="ect-btn v5" onclick="setSubStarECT('sc-5','postre',5,this)">5</div><div class="ect-btn v6" onclick="setSubStarECT('sc-5','postre',6,this)">6</div><div class="ect-btn v7" onclick="setSubStarECT('sc-5','postre',7,this)">7</div><div class="ect-btn v8" onclick="setSubStarECT('sc-5','postre',8,this)">8</div><div class="ect-btn v9" onclick="setSubStarECT('sc-5','postre',9,this)">9</div><div class="ect-btn v10" onclick="setSubStarECT('sc-5','postre',10,this)">10</div></div>
+              </div>
+              <div class="rubrica-item">
+                <span class="rubrica-texto">Tono consultivo, sin presión, usando lenguaje de recomendación genuina</span>
+                <span class="rubrica-peso">25%</span>
+                <div class="ect-row" data-criterio="sc-5" data-sub="tono" style="max-width:200px"><div class="ect-btn v1" onclick="setSubStarECT('sc-5','tono',1,this)">1</div><div class="ect-btn v2" onclick="setSubStarECT('sc-5','tono',2,this)">2</div><div class="ect-btn v3" onclick="setSubStarECT('sc-5','tono',3,this)">3</div><div class="ect-btn v4" onclick="setSubStarECT('sc-5','tono',4,this)">4</div><div class="ect-btn v5" onclick="setSubStarECT('sc-5','tono',5,this)">5</div><div class="ect-btn v6" onclick="setSubStarECT('sc-5','tono',6,this)">6</div><div class="ect-btn v7" onclick="setSubStarECT('sc-5','tono',7,this)">7</div><div class="ect-btn v8" onclick="setSubStarECT('sc-5','tono',8,this)">8</div><div class="ect-btn v9" onclick="setSubStarECT('sc-5','tono',9,this)">9</div><div class="ect-btn v10" onclick="setSubStarECT('sc-5','tono',10,this)">10</div></div>
+              </div>
+            </div>
+            <textarea class="sc-obs" id="obs-sc-5" placeholder="Observaciones sobre venta sugestiva y técnica comercial…"></textarea>
+          </div>
+        </div>
+
+      </div><!-- /salon-left -->
+
+      <!-- DERECHA: Resumen + envío salón -->
+      <div class="salon-right">
+        <div class="eval-header">
+          <div class="eval-title">Resumen · Salón</div>
+          <div class="eval-score-badge" id="salon-global">—</div>
+        </div>
+        <div style="padding:16px;">
+
+          <!-- KPIs del salón -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+            <div class="res-cell"><span class="res-lbl">Criterios</span><span class="res-val" id="s-count">0/5</span></div>
+            <div class="res-cell"><span class="res-lbl">Promedio</span><span class="res-val" id="s-avg">—</span></div>
+            <div class="res-cell"><span class="res-lbl">Calificación</span><span class="res-val" id="s-letra" style="font-size:26px">—</span></div>
+            <div class="res-cell"><span class="res-lbl">Nivel</span><span class="res-val" id="s-nivel" style="font-size:13px;letter-spacing:1px">—</span></div>
+          </div>
+
+          <!-- Semáforo -->
+          <div class="semaforo" style="margin-bottom:10px;">
+            <div class="sem-dot" style="background:var(--red)"    id="ssem-critico"></div>
+            <div class="sem-dot" style="background:var(--orange)" id="ssem-deficiente"></div>
+            <div class="sem-dot" style="background:var(--yellow)" id="ssem-regular"></div>
+            <div class="sem-dot" style="background:var(--green)"  id="ssem-bueno"></div>
+            <div class="sem-dot" style="background:var(--green2)" id="ssem-excelente"></div>
+          </div>
+          <div class="nivel-bar" style="margin-bottom:16px;"><div class="nivel-needle" id="snivel-needle" style="left:50%"></div></div>
+
+          <!-- Detalle por criterio -->
+          <div class="panel-block" style="background:var(--surface);border:1px solid var(--border);padding:14px;margin-bottom:12px;">
+            <div class="panel-title">Desglose por Criterio</div>
+            <div id="salon-desglose" style="display:flex;flex-direction:column;gap:8px;"></div>
+          </div>
+
+          <!-- Tiempos capturados -->
+          <div class="panel-block" style="background:var(--surface);border:1px solid var(--border);padding:14px;margin-bottom:12px;">
+            <div class="panel-title">Tiempos de Servicio</div>
+            <div id="tiempos-capturados" style="display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--text2);">
+              <div style="color:var(--text3);font-size:12px;">Usa los botones del timer para registrar cada etapa.</div>
+            </div>
+          </div>
+
+          <!-- Conclusión y envío -->
+          <div class="panel-block" style="background:var(--surface);border:1px solid var(--border);padding:14px;">
+            <div class="panel-title">Dictamen · Firma · Envío</div>
+            <textarea class="concl" id="s-conclusion" style="height:80px;" placeholder="Dictamen final: fortalezas, áreas de oportunidad y plan de acción..."></textarea>
+            <div class="firmas">
+              <div class="firma">
+                <div class="firma-lbl">Auditor DMZ</div>
+                <input class="firma-inp" id="s-fa" placeholder="Nombre completo">
+              </div>
+              <div class="firma">
+                <div class="firma-lbl">Mesero / Responsable</div>
+                <input class="firma-inp" id="s-fc" placeholder="Nombre completo">
+              </div>
+            </div>
+            <div class="sig-wrap" style="margin-top:10px;">
+              <canvas class="sig-canvas" id="s-sig-canvas" width="280" height="56"></canvas>
+              <div class="sig-actions"><button class="sig-btn" onclick="clearSSig()">Limpiar firma</button></div>
+            </div>
+            <div class="submit-status" id="s-submit-status">
+              <div class="spinner" id="s-spinner"></div>
+              <span id="s-submit-msg">Procesando...</span>
+            </div>
+            <button class="btn-act solid" id="s-btn-submit" onclick="submitSalon()" style="margin-top:10px;">Enviar Evaluación de Salón</button>
+            <button class="btn-act outline" onclick="limpiarSalon()">Nueva Evaluación</button>
+          </div>
+
+        </div>
+      </div><!-- /salon-right -->
+
+    </div>
+  </div>
+
+
+  <!-- ════ VIEW: MONITOREO ════ -->
+  <div class="view" id="view-monitor">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Monitoreo de Sesiones</div>
+        <div class="page-sub">Actividad en tiempo real · Errores · Acciones de operadores</div>
+      </div>
+      <button class="btn-filter" onclick="loadMonitor()" style="background:transparent;border:1px solid var(--border2);color:var(--text2);">↻ Actualizar</button>
+    </div>
+
+    <!-- KPIs de monitoreo -->
+    <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px;">
+      <div class="kpi-card gold">
+        <span class="kpi-lbl">Eventos hoy</span>
+        <div class="kpi-val" id="m-total">—</div>
+      </div>
+      <div class="kpi-card red">
+        <span class="kpi-lbl">Errores</span>
+        <div class="kpi-val" id="m-errors" style="color:var(--red)">—</div>
+      </div>
+      <div class="kpi-card orange">
+        <span class="kpi-lbl">Warnings</span>
+        <div class="kpi-val" id="m-warns">—</div>
+      </div>
+      <div class="kpi-card green">
+        <span class="kpi-lbl">Sesiones activas</span>
+        <div class="kpi-val" id="m-sessions">—</div>
+      </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filters-bar" style="margin-bottom:14px;">
+      <select class="f-select" id="m-filter-sev" onchange="loadMonitor()">
+        <option value="">Todo</option>
+        <option value="error">Solo errores</option>
+        <option value="warn">Solo warnings</option>
+        <option value="info">Solo info</option>
+      </select>
+      <select class="f-select" id="m-filter-type" onchange="loadMonitor()">
+        <option value="">Todos los tipos</option>
+        <option value="error">JS Error</option>
+        <option value="api_error">API Error</option>
+        <option value="network_error">Error de red</option>
+        <option value="session_start">Inicio sesión</option>
+        <option value="session_end">Fin sesión</option>
+        <option value="api_slow">API lenta</option>
+      </select>
+      <select class="f-select" id="m-filter-op" onchange="loadMonitor()">
+        <option value="">Todos los operadores</option>
+      </select>
+      <span style="font-size:12px;color:var(--text3);margin-left:auto;" id="m-last-update">—</span>
+    </div>
+
+    <!-- Tabla de eventos -->
+    <div class="table-wrap">
+      <table class="data-table" id="monitor-table">
+        <thead>
+          <tr>
+            <th>Hora</th>
+            <th>Severidad</th>
+            <th>Tipo</th>
+            <th>Operador</th>
+            <th>Vista</th>
+            <th>Detalle</th>
+            <th>IP</th>
+            <th>GPS</th>
+          </tr>
+        </thead>
+        <tbody id="monitor-tbody">
+          <tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text3)">Cargando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Auto-refresh -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;">
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text3);cursor:pointer;">
+        <input type="checkbox" id="m-autorefresh" onchange="toggleAutoRefresh(this.checked)" style="cursor:pointer;">
+        Auto-actualizar cada 15 segundos
+      </label>
+      <span style="font-size:12px;color:var(--text3);" id="m-count">—</span>
+    </div>
+  </div>
+
+</div><!-- /main-content -->
+
+<script>
+'use strict';
+
+/* ── SEGURIDAD ── */
+document.addEventListener('contextmenu', e => e.preventDefault());
+document.addEventListener('keydown', e => {
+  if (e.key==='F12' || (e.ctrlKey&&['u','s','a'].includes(e.key.toLowerCase())) ||
+      (e.ctrlKey&&e.shiftKey&&['i','j'].includes(e.key.toLowerCase()))) {
+    e.preventDefault(); return false;
+  }
+});
+
+/* ── SESSION ── */
+const SESSION = (() => {
+  const at  = sessionStorage.getItem('racreaa_at');
+  const op  = JSON.parse(sessionStorage.getItem('racreaa_op')||'null');
+  const ten = JSON.parse(sessionStorage.getItem('racreaa_tenant')||'null');
+  // Si no hay token, redirigir al login
+  if (!at) { window.location.href = '/login.html'; return { token: null, operator: null, tenant: null }; }
+  return { token: at, operator: op, tenant: ten };
+})();
+
+const TOKEN    = SESSION.token;
+const OPERATOR = SESSION.operator;
+const TENANT   = SESSION.tenant;
+
+// Cargar info de sesión en UI
+if (OPERATOR) {
+  document.getElementById('session-name').textContent = OPERATOR.full_name || '—';
+  document.getElementById('session-role').textContent = OPERATOR.role || '—';
+  document.getElementById('sf-tenant').textContent = TENANT?.slug || '—';
+  document.getElementById('sf-session').textContent = (TOKEN||'demo-session').slice(0,20)+'…';
+}
+
+function logout() {
+  if (!confirm('¿Cerrar sesión?')) return;
+  fetch('https://dmz-audit.netlify.app/api/auth-logout', { method:'POST', credentials:'include',
+    headers:{ 'Authorization': TOKEN?`Bearer ${TOKEN}`:'', 'Content-Type':'application/json' },
+    body: JSON.stringify({ all_devices: false })
+  }).finally(() => {
+    sessionStorage.clear();
+    window.location.href = '/frontend/login.html';
+  });
+}
+
+/* ── NAVEGACIÓN ── */
+const VIEWS = ['dashboard','evaluacion','salon','historial','monitor','ajustes'];
+function showView(name) {
+  VIEWS.forEach(v => {
+    document.getElementById(`view-${v}`).classList.toggle('active', v===name);
+    document.getElementById(`nav-${v}`).classList.toggle('active', v===name);
+  });
+  document.getElementById('view-title').textContent =
+    { dashboard:'Dashboard', evaluacion:'Nueva Evaluación', salon:'Evaluación de Salón', historial:'Historial', monitor:'Monitoreo de Sesiones', ajustes:'Ajustes' }[name] || '';
+  if (name==='dashboard') loadDashboard();
+  if (name==='historial') { currentPage=1; loadHistorial(); }
+  if (name==='ajustes')   loadAjustes();
+  if (name==='monitor')   loadMonitor();
+  trackView(name);
+  if (name==='salon')     initSalonTimer();
+}
+
 /* ── GPS ── */
 let currentGPS = null;
 function initGPS() {
   if (!navigator.geolocation) return;
-  navigator.geolocation.watchPosition(pos => {
-    currentGPS = { lat:pos.coords.latitude, lng:pos.coords.longitude, accuracy:pos.coords.accuracy, timestamp:pos.timestamp };
-    const dot1 = document.getElementById('gps-dot-tb');
-    const dot2 = document.getElementById('gps-micro-dot');
-    const coords = `${currentGPS.lat.toFixed(5)}, ${currentGPS.lng.toFixed(5)}`;
-    if(dot1){ dot1.className='gps-dot-tb active'; }
-    if(dot2){ dot2.className='gps-micro-dot active'; }
-    document.getElementById('gps-status-tb').textContent = 'GPS';
-    document.getElementById('gps-micro-text').textContent = 'GPS activo';
-    document.getElementById('gps-coords-tb').textContent  = coords;
-    document.getElementById('gps-micro-coords').textContent = coords + ' ±'+Math.round(pos.coords.accuracy)+'m';
-  }, () => {
-    document.getElementById('gps-dot-tb').className='gps-dot-tb error';
-    document.getElementById('gps-status-tb').textContent = 'Sin GPS';
-  }, { enableHighAccuracy:true, timeout:15000, maximumAge:5000 });
-}
-initGPS();
+  navigator.geolocation.getCurrentPosition(
+    pos => { currentGPS = { lat:pos.coords.latitude, lng:pos.coords.longitude,
+               accuracy:pos.coords.accuracy, timestamp:pos.timestamp }; },
+    () => {},
+    { enableHighAccuracy:false, timeout:8000, maximumAge:120000 }
+  );
+}initGPS();
 
 /* ── RELOJ EN TIEMPO REAL ── */
 let arrivedAt = null;

@@ -1041,9 +1041,9 @@ body::after {
 
 <!-- GPS PILL (fijo bajo topbar) -->
 <div style="position:fixed;top:calc(54px + var(--safe-top));left:0;right:0;z-index:200;padding:6px 16px;background:var(--s2);border-bottom:1px solid var(--border);">
-  <div class="gps-pill-m" style="margin:0;border:none;background:transparent;padding:0;">
+  <div class="gps-pill-m" style="margin:0;border:none;background:transparent;padding:0;display:none;" id="gps-pill-wrap">
     <div class="gps-dot-m" id="gps-dot-m"></div>
-    <span class="gps-text-m" id="gps-text-m">GPS...</span>
+    <span class="gps-text-m" id="gps-text-m"></span>
     <span class="gps-coords-m" id="gps-coords-m"></span>
   </div>
 </div>
@@ -1310,17 +1310,18 @@ setInterval(tickClock, 1000); tickClock();
 
 /* ── GPS ── */
 let GPS = null;
-if (navigator.geolocation) {
-  navigator.geolocation.watchPosition(pos => {
-    GPS = { lat:pos.coords.latitude, lng:pos.coords.longitude, accuracy:pos.coords.accuracy, timestamp:pos.timestamp };
-    document.getElementById('gps-dot-m').className = 'gps-dot-m active';
-    document.getElementById('gps-text-m').textContent = 'GPS';
-    document.getElementById('gps-coords-m').textContent = `${GPS.lat.toFixed(5)}, ${GPS.lng.toFixed(5)}`;
-  }, () => {
-    document.getElementById('gps-dot-m').className = 'gps-dot-m error';
-    document.getElementById('gps-text-m').textContent = 'Sin GPS';
-  }, { enableHighAccuracy:true, timeout:15000, maximumAge:5000 });
-}
+// GPS silencioso — no bloquea, no muestra error, opcional
+(function() {
+  if (!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      GPS = { lat: pos.coords.latitude, lng: pos.coords.longitude,
+              accuracy: pos.coords.accuracy, timestamp: pos.timestamp };
+    },
+    () => { /* Sin GPS — continuar sin él */ },
+    { enableHighAccuracy: false, timeout: 8000, maximumAge: 120000 }
+  );
+})();
 
 /* ── SERVICE WORKER ── */
 if ('serviceWorker' in navigator) {
@@ -1730,7 +1731,7 @@ async function captureM(cardId) {
     reader.readAsDataURL(file);
     document.body.removeChild(input);
   };
-  if (!gps && !confirm('Sin GPS. ¿Continuar?')) { document.body.removeChild(input); return; }
+  // GPS opcional — continuar siempre
   input.click();
 }
 
