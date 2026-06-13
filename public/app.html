@@ -556,28 +556,36 @@ body { background:var(--bg); font-family:'Morl',sans-serif; color:var(--text); f
 /* ══ RESUMEN FLOTANTE ══ */
 .fab-summary {
   position: fixed;
-  bottom: calc(72px + var(--safe-bot));
-  right: 16px;
+  bottom: calc(64px + var(--safe-bot));
+  left: 12px; right: 12px;
   background: var(--gold);
   color: var(--dark);
   font-family: 'Morl', sans-serif;
   font-weight: 900;
-  font-size: 20px;
-  width: 56px; height: 56px;
-  border-radius: 28px;
-  display: flex;
-  flex-direction: column;
+  font-size: 13px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  height: 52px;
+  border-radius: 4px;
+  display: none;
+  flex-direction: row;
   align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 16px rgba(0,0,0,.2);
+  justify-content: space-between;
+  padding: 0 20px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.25);
   cursor: pointer;
   z-index: 200;
   border: none;
-  line-height: 1;
   touch-action: manipulation;
+  -webkit-user-select: none;
 }
-.fab-summary .fab-sub { font-size:11px; letter-spacing: 1px; color: rgba(44,42,36,.6); }
-.fab-summary.ready { animation: fab-pulse 2s infinite; }
+.fab-summary.visible { display: flex; }
+.fab-score-wrap { display:flex; align-items:baseline; gap:4px; }
+.fab-score-num { font-size:22px; font-weight:900; color:var(--dark); line-height:1; }
+.fab-score-den { font-size:11px; color:rgba(44,42,36,.5); }
+.fab-label { font-size:12px; letter-spacing:2px; text-transform:uppercase; font-weight:700; }
+.fab-arrow { font-size:18px; }
+.fab-summary.ready { box-shadow: 0 4px 20px rgba(196,146,42,.5); animation: fab-pulse 2s infinite; }
 @keyframes fab-pulse {
   0%,100% { box-shadow: 0 4px 16px rgba(196,146,42,.4); }
   50% { box-shadow: 0 4px 24px rgba(196,146,42,.8); }
@@ -1180,9 +1188,13 @@ body::after {
 </div><!-- /main-area -->
 
 <!-- FAB RESUMEN (evaluación alimentos) -->
-<button class="fab-summary" id="fab-sum" onclick="openSheet()" style="display:none;">
-  <span id="fab-score">—</span>
-  <span class="fab-sub">/ 100</span>
+<button class="fab-summary" id="fab-sum" onclick="openSheet()">
+  <div class="fab-score-wrap">
+    <span class="fab-score-num" id="fab-score">—</span>
+    <span class="fab-score-den">/ 100</span>
+  </div>
+  <span class="fab-label">Finalizar y Enviar</span>
+  <span class="fab-arrow">→</span>
 </button>
 
 <!-- SHEET MODAL -->
@@ -1749,10 +1761,16 @@ function updateFAB() {
   if (ev.length) {
     const avg = Math.round(ev.reduce((a,c)=>a+c._pct,0)/ev.length);
     document.getElementById('fab-score').textContent = avg;
-    fab.style.display = 'flex';
-    fab.className = `fab-summary ${getNKey(avg)==='excelente'||getNKey(avg)==='bueno'?'ready':''}`;
+    const isReady = getNKey(avg)==='excelente'||getNKey(avg)==='bueno';
+    fab.className = `fab-summary visible${isReady?' ready':''}`;
+    // Color semáforo en el botón
+    const nm = NMAP[getNKey(avg)];
+    fab.style.background = nm?.hex || 'var(--gold)';
+    fab.style.color = '#fff';
   } else {
-    fab.style.display = currentView==='alimentos' ? 'flex' : 'none';
+    fab.className = 'fab-summary';
+    fab.style.background = '';
+    fab.style.color = '';
     document.getElementById('fab-score').textContent = '—';
   }
 }
