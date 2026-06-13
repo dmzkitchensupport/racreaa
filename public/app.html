@@ -1984,6 +1984,26 @@ function clearSheetSig(){const c=document.getElementById('sheet-sig');if(c)c.get
 function getSheetSig(){const c=document.getElementById('sheet-sig');if(!c)return null;const d=c.getContext('2d').getImageData(0,0,c.width,c.height).data;return d.some(v=>v!==0)?c.toDataURL('image/png'):null;}
 
 /* SUBMIT */
+async function fetchWithAuth(url, opts={}) {
+  opts.headers = opts.headers || {};
+  opts.headers['Authorization'] = `Bearer ${(sessionStorage.getItem('racreaa_at')||'')}`;
+  let res = await fetch(url, opts);
+  if (res.status === 401) {
+    try {
+      const r = await fetch('https://dmz-audit.netlify.app/.netlify/functions/auth-refresh',
+        {method:'POST',credentials:'include',headers:{'Content-Type':'application/json'}});
+      if (r.ok) {
+        const d = await r.json();
+        const t = d.token || d.access_token || '';
+        if (t) sessionStorage.setItem('racreaa_at', t);
+        opts.headers['Authorization'] = `Bearer ${(sessionStorage.getItem('racreaa_at')||'')}`;
+        res = await fetch(url, opts);
+      } else { sessionStorage.clear(); window.location.href='/login.html'; }
+    } catch(e) { sessionStorage.clear(); window.location.href='/login.html'; }
+  }
+  return res;
+}
+
 async function submitFromSheet() {
   const btn = document.getElementById('sheet-btn');
   const auditor = document.getElementById('sheet-fa').value.trim();
