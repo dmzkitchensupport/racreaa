@@ -44,21 +44,8 @@ async function sendReport({ auditId, body, serverTs, tenantId }) {
   const nivel = getNivel(body.globalScore || 0);
   const tipo  = (body.tipo || 'alimentos').toUpperCase();
 
-  // ── Fotos como adjuntos ──
-  const attachments = [];
-  let fotoIdx = 1;
-  (body.items || []).forEach(item => {
-    (item.evidence || []).slice(0, 5).forEach(ev => {
-      if (!ev.base64) return;
-      const b64 = ev.base64.includes(',') ? ev.base64.split(',')[1] : ev.base64;
-      const ext  = (ev.mimeType || 'image/jpeg').split('/')[1] || 'jpg';
-      attachments.push({
-        filename: `foto_${String(fotoIdx).padStart(2,'0')}_${sanitize(item.nombre||'item',20).replace(/\s/g,'_')}.${ext}`,
-        content:  b64,
-      });
-      fotoIdx++;
-    });
-  });
+  // ── Fotos comprimidas — inline en el email ──
+  const attachments = []; // vacío — fotos van inline
 
   // ── HTML del detalle por platillo ──
   const itemsHtml = (body.items || []).map(item => {
@@ -80,11 +67,16 @@ async function sendReport({ auditId, body, serverTs, tenantId }) {
       </tr>`;
     }).join('');
 
-    const nFotos = (item.evidence || []).filter(e => e.base64).length;
-    const fotosTag = nFotos > 0
-      ? `<div style="padding:6px 14px;background:#F0F7F0;border-top:1px solid #E0DDD4">
-          <span style="font-size:10px;color:#2E7D52;font-weight:700">📎 ${nFotos} foto${nFotos>1?'s':''} adjunta${nFotos>1?'s':''} al email</span>
-          ${(item.evidence||[]).filter(e=>e.gps).map(e=>`<span style="font-size:9px;color:#5A9A6A;margin-left:8px">📍 ${e.gps.lat?.toFixed(5)}, ${e.gps.lng?.toFixed(5)}</span>`).join('')}
+    // Fotos inline — comprimidas a <160KB en el frontend
+    const fotosTag = (item.evidence || []).filter(e => e.base64).length > 0
+      ? `<div style="padding:8px 14px;border-top:1px solid #E0DDD4">
+          <div style="font-size:9px;color:#2E7D52;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:700">Evidencia fotográfica</div>
+          ${(item.evidence||[]).slice(0,5).map(ev => {
+            if (!ev.base64) return '';
+            const src = ev.base64.startsWith('data:') ? ev.base64 : `data:${ev.mimeType||'image/jpeg'};base64,${ev.base64}`;
+            const gps = ev.gps ? `<div style="font-size:9px;color:#2E7D52;margin-top:2px">📍 ${ev.gps.lat?.toFixed(5)}, ${ev.gps.lng?.toFixed(5)}</div>` : '';
+            return `<div style="margin-bottom:8px"><img src="${src}" style="max-width:100%;max-height:300px;border-radius:3px;border:1px solid #E0DDD4;display:block"/>${gps}</div>`;
+          }).join('')}
          </div>`
       : '';
 
@@ -152,7 +144,7 @@ async function sendReport({ auditId, body, serverTs, tenantId }) {
     to:          REPORT_CC,
     subject:     `[DMZ Audit] ${sanitize(body.establecimiento)||'Sin nombre'} · ${body.globalScore||0}/100 · ${nivel.label}`,
     html,
-    attachments: attachments.length > 0 ? attachments : undefined,
+    // attachments: vacío — fotos van inline
   });
 }
 
