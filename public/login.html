@@ -436,6 +436,11 @@ body {
         <span class="field-error" id="err-pass">Ingrese su contraseña.</span>
       </div>
 
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+        <input type="checkbox" id="f-remember" style="width:16px;height:16px;accent-color:var(--gold);cursor:pointer;">
+        <label for="f-remember" style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);cursor:pointer;user-select:none;">Recordarme</label>
+      </div>
+
       <button class="btn-submit" id="btn-submit" onclick="doLogin()">
         <div class="spinner" id="spinner"></div>
         <span id="btn-label">Ingresar</span>
@@ -451,7 +456,7 @@ body {
       </div>
 
       <div class="form-footer">
-        DMZ Audit &mdash; Plataforma segura &mdash; TLS 1.3 &mdash; <a href='/privacidad.html' style='color:var(--gold);text-decoration:none;'>Privacidad</a> &mdash; <a href='/contrato.html' style='color:var(--gold);text-decoration:none;'>Contrato</a>
+        DMZ Audit &mdash; Plataforma segura &mdash; TLS 1.3 &mdash; <a href='/privacidad' style='color:var(--gold);text-decoration:none;'>Privacidad</a> &mdash; <a href='/contrato' style='color:var(--gold);text-decoration:none;'>Contrato</a>
       </div>
 
     </div>
@@ -543,6 +548,22 @@ function hideAlert() {
 }
 
 /* ── Login ── */
+// Auto-fill si el usuario eligió Recordarme
+(function autoFill() {
+  const email  = localStorage.getItem('dmz_remember_email');
+  const tenant = localStorage.getItem('dmz_remember_tenant');
+  if (email) {
+    const fe = document.getElementById('f-email');
+    const ft = document.getElementById('f-tenant');
+    const fc = document.getElementById('f-remember');
+    if (fe) fe.value = email;
+    if (ft && tenant) ft.value = tenant;
+    if (fc) fc.checked = true;
+    // Mover foco a contraseña
+    setTimeout(() => document.getElementById('f-pass')?.focus(), 100);
+  }
+})();
+
 async function doLogin() {
   hideAlert();
   if (!validateForm()) return;
@@ -576,6 +597,16 @@ async function doLogin() {
       sessionStorage.setItem('racreaa_at', data.access_token);
       sessionStorage.setItem('racreaa_op', JSON.stringify(data.operator));
       sessionStorage.setItem('racreaa_tenant', JSON.stringify(data.tenant));
+
+      // Recordarme: guardar email y tenant (nunca la contraseña)
+      const remember = document.getElementById('f-remember')?.checked;
+      if (remember) {
+        localStorage.setItem('dmz_remember_email', body.email);
+        localStorage.setItem('dmz_remember_tenant', body.tenant_slug);
+      } else {
+        localStorage.removeItem('dmz_remember_email');
+        localStorage.removeItem('dmz_remember_tenant');
+      }
 
       showAlert('success', `Bienvenido, ${data.operator.full_name}. Redirigiendo...`);
       label.textContent = 'Accediendo...';
