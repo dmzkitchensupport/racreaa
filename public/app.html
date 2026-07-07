@@ -452,6 +452,35 @@ body { background:var(--bg); font-family:'Morl',sans-serif; color:var(--text); f
 .ect-excelencia { color:#1B5E38; }
 
 /* Botón cámara */
+/* ── Cronómetro de servicio ── */
+.timer-wrap {
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(0,0,0,.18); border-radius: 4px;
+  padding: 10px 12px; margin: 10px 0;
+  border-left: 3px solid rgba(255,255,255,.12);
+  transition: border-color .4s;
+}
+.timer-wrap.t-running { border-left-color: var(--gold); }
+.timer-wrap.t-ok      { border-left-color: var(--green); }
+.timer-wrap.t-warn    { border-left-color: var(--yellow); }
+.timer-wrap.t-late    { border-left-color: var(--red); }
+.timer-display {
+  font-family: 'Morl', sans-serif; font-weight: 900;
+  font-size: 22px; min-width: 58px; color: rgba(255,255,255,.4);
+  letter-spacing: 1px; transition: color .3s;
+}
+.timer-display.running { color: var(--gold); }
+.timer-label { flex: 1; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,.35); }
+.timer-btn {
+  font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+  padding: 6px 12px; border-radius: 3px; cursor: pointer; border: none;
+  -webkit-user-select: none; touch-action: manipulation; transition: opacity .15s;
+}
+.timer-btn:active { opacity: .65; }
+.timer-btn-start { background: var(--green); color: #fff; }
+.timer-btn-stop  { background: var(--red);   color: #fff; }
+.timer-result    { font-size: 12px; font-weight: 700; min-width: 44px; text-align: right; }
+
 .btn-camera {
   display: flex;
   align-items: center;
@@ -1515,6 +1544,78 @@ function showSaveFlash() {
   setTimeout(() => { el.style.opacity = '.3'; el.style.color = 'rgba(255,255,255,.3)'; }, 800);
 }
 
+/* ── Cronómetros por platillo ── */
+const _timers = {}; // { id: { start, end, interval } }
+const LIMITE_MIN = 20;
+
+function timerStart(id) {
+  if (_timers[id]?.start) return; // ya iniciado
+  _timers[id] = { start: Date.now(), end: null, interval: null };
+
+  // UI
+  const tw   = document.getElementById('tw-'+id);
+  const disp = document.getElementById('td-'+id);
+  const lbl  = document.getElementById('tl-'+id);
+  const bs   = document.getElementById('tbstart-'+id);
+  const be   = document.getElementById('tbstop-'+id);
+  if (bs) bs.style.display  = 'none';
+  if (be) be.style.display  = 'inline-block';
+  if (disp) disp.classList.add('running');
+  if (lbl)  lbl.textContent = 'Corriendo…';
+  if (tw)   tw.classList.add('t-running');
+
+  // Tick
+  _timers[id].interval = setInterval(() => {
+    const sec = Math.floor((Date.now() - _timers[id].start) / 1000);
+    const mm  = Math.floor(sec / 60), ss = sec % 60;
+    if (disp) disp.textContent = `${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
+    // Semáforo
+    const min = sec / 60;
+    const tw2 = document.getElementById('tw-'+id);
+    if (tw2) {
+      tw2.classList.remove('t-running','t-ok','t-warn','t-late');
+      if      (min > LIMITE_MIN)            tw2.classList.add('t-late');
+      else if (min > LIMITE_MIN * 0.75)     tw2.classList.add('t-warn');
+      else                                  tw2.classList.add('t-ok');
+    }
+  }, 1000);
+
+  // Guardar en card data
+  const d = cardsM.find(c => c.id === id);
+  if (d) d.timerStart = new Date().toISOString();
+}
+
+function timerStop(id) {
+  const t = _timers[id]; if (!t?.start) return;
+  clearInterval(t.interval);
+  t.end = Date.now();
+
+  const sec  = Math.floor((t.end - t.start) / 1000);
+  const mm   = Math.floor(sec / 60), ss = sec % 60;
+  const dur  = `${mm}m ${ss}s`;
+  const min  = sec / 60;
+
+  // Color semáforo final
+  let color = 'var(--green)';
+  if      (min > LIMITE_MIN)          color = 'var(--red)';
+  else if (min > LIMITE_MIN * 0.75)   color = 'var(--yellow)';
+
+  // UI
+  const disp = document.getElementById('td-'+id);
+  const lbl  = document.getElementById('tl-'+id);
+  const be   = document.getElementById('tbstop-'+id);
+  const res  = document.getElementById('tr-'+id);
+  if (disp) { disp.classList.remove('running'); disp.style.color = color; }
+  if (lbl)  lbl.textContent = 'Tiempo total';
+  if (be)   be.style.display = 'none';
+  if (res)  { res.textContent = dur; res.style.color = color; res.style.display = 'block'; }
+
+  // Guardar en card data
+  const d = cardsM.find(c => c.id === id);
+  if (d) { d.timerEnd = new Date().toISOString(); d.timerDuration = dur; }
+  idbSave();
+}
+
 function addCardM() {
   counterM++;
   const id = 'cm'+Date.now();
@@ -1558,6 +1659,16 @@ function addCardM() {
         </select>
       </div>
       ${critBlocks}
+      <div class="timer-wrap" id="tw-${id}">
+        <div>
+          <div class="timer-display" id="td-${id}">00:00</div>
+          <div class="timer-label" id="tl-${id}">Comanda → Mesa</div>
+        </div>
+        <button class="timer-btn timer-btn-start" id="tbstart-${id}" onclick="timerStart('${id}')">▶ Comanda</button>
+        <button class="timer-btn timer-btn-stop"  id="tbstop-${id}"  onclick="timerStop('${id}')"  style="display:none">■ En Mesa</button>
+        <span class="timer-result" id="tr-${id}" style="display:none;color:var(--green)"></span>
+      </div>
+
       <button class="btn-camera" onclick="captureM('${id}')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
         Capturar evidencia con GPS
