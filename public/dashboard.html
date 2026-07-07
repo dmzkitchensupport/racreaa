@@ -1156,7 +1156,7 @@ body{background:var(--bg);font-family:'Morl',sans-serif;color:var(--text);displa
           </tr>
         </thead>
         <tbody id="dash-table-body">
-          <tr><td colspan="8" class="empty-state"><div class="e-icon">⏳</div><div class="e-text">Cargando auditorías...</div></td></tr>
+          <tr><td colspan="8" class="empty-state"><div class="e-icon">📋</div><div class="e-text">Sin auditorías registradas aún.</div></td></tr>
         </tbody>
       </table>
     </div>
@@ -3045,7 +3045,7 @@ input,textarea,[contenteditable] { -webkit-user-select:text; user-select:text; }
           </tr>
         </thead>
         <tbody id="dash-table-body">
-          <tr><td colspan="8" class="empty-state"><div class="e-icon">⏳</div><div class="e-text">Cargando auditorías...</div></td></tr>
+          <tr><td colspan="8" class="empty-state"><div class="e-icon">📋</div><div class="e-text">Sin auditorías registradas aún.</div></td></tr>
         </tbody>
       </table>
     </div>
@@ -3864,13 +3864,17 @@ function formatTS(ts) {
 /* ── CARGAR DASHBOARD ── */
 async function loadDashboard() {
   try {
-    const headers = TOKEN ? { 'Authorization':`Bearer ${TOKEN}` } : {};
-    const res = await fetch(`https://dmz-audit.netlify.app/api/audits?tenant=${TENANT?.slug||'dmz'}&limit=8`, { headers });
-    if (!res.ok) throw new Error('No autorizado');
+    const t = TOKEN || sessionStorage.getItem('racreaa_at') || '';
+    if (!t) { renderDashboard({ audits:[], total:0, avg:0, counts:{} }); return; }
+    const res = await fetch(
+      `https://dmz-audit.netlify.app/api/audits?tenant=${TENANT?.slug||'dmz'}&limit=8`,
+      { headers: { 'Authorization': `Bearer ${t}` } }
+    );
+    if (!res.ok) { renderDashboard({ audits:[], total:0, avg:0, counts:{} }); return; }
     const data = await res.json();
     renderDashboard(data);
-  } catch {
-    // Mostrar estado vacío si no hay datos o no hay API de listado aún
+  } catch(e) {
+    console.warn('[loadDashboard]', e.message);
     renderDashboard({ audits:[], total:0, avg:0, counts:{} });
   }
 }
