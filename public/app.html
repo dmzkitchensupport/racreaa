@@ -1570,7 +1570,7 @@ function addCardM() {
         <span id="cs-${id}-${c.key}" style="font-family:'Morl',sans-serif;font-weight:700;font-size:15px;color:var(--text3)">—</span>
       </div>
       <div class="seg-rating">
-        ${[1,2,3,4,5,6,7,8,9,10].map(i=>`<div class="seg-btn-r v${i}" onclick="setStarM('${id}','${c.key}',${i})">${i}</div>`).join('')}
+        ${[1,2,3,4,5].map(i=>`<div class="seg-btn-r v${i}" onclick="setStarM('${id}','${c.key}',${i})">${i}</div>`).join('')}
       </div>
       <div class="ect-descriptor" id="ect-${id}-${c.key}"></div>
     </div>`).join('');
@@ -1681,7 +1681,7 @@ function calcCardM(d) {
   // ECT: promedio sobre 10, convertido a score 0-100
   // ECT: promedio solo sobre criterios calificados → score 0-100
   const avg  = vals.reduce((a,b)=>a+b,0) / vals.length;
-  const pct  = Math.round(avg * 10);
+  const pct  = Math.round(avg * 20); // escala 1-5 → 0-100
   const nk   = getNKey(pct); const nm = NMAP[nk];
   d._pct = pct; d._nivel = nk;
   const psb  = document.getElementById(`psb-${d.id}`); if(psb){psb.textContent=pct; psb.style.color=nm.hex;}

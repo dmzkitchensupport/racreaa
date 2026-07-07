@@ -58,7 +58,7 @@ async function sendReport({ auditId, body, serverTs, tenantId }) {
       'Textura':      crit.textura,
       'Porción':      crit.porcion,
     }).filter(([,v]) => v > 0).map(([k, v]) => {
-      const pct = Math.round((v / 10) * 100);
+      const pct = Math.round((v / 5) * 100); // 1-5 → 0-100
       const c = v >= 7 ? '#2E7D52' : v >= 5 ? '#A07820' : '#B83232';
       return `<tr>
         <td style="padding:3px 8px;font-size:11px;color:#6B6860;width:110px">${k}</td>
