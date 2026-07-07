@@ -1047,7 +1047,7 @@ body{background:var(--bg);font-family:'Morl',sans-serif;color:var(--text);displa
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
     </svg>
-    Nueva Evaluación
+    Evaluación de Cocina
   </a>
 
   <a class="nav-item" onclick="showView('salon')" id="nav-salon">
@@ -1170,7 +1170,7 @@ body{background:var(--bg);font-family:'Morl',sans-serif;color:var(--text);displa
       <div class="split-left">
         <div class="page-header">
           <div>
-            <div class="page-title">Nueva Evaluación</div>
+            <div class="page-title">Evaluación de Cocina</div>
             <div class="page-sub">Calificación de Alimentos · DMZ Audit</div>
           </div>
           <button class="btn-add-eval" onclick="addCard()">+ Agregar platillo</button>
@@ -1874,7 +1874,7 @@ function showView(name) {
     document.getElementById(`nav-${v}`).classList.toggle('active', v===name);
   });
   document.getElementById('view-title').textContent =
-    { dashboard:'Dashboard', evaluacion:'Nueva Evaluación', salon:'Evaluación de Salón', historial:'Historial', monitor:'Monitoreo de Sesiones', ajustes:'Ajustes' }[name] || '';
+    { dashboard:'Dashboard', evaluacion:'Evaluación de Cocina', salon:'Evaluación de Salón', historial:'Historial', monitor:'Monitoreo de Sesiones', ajustes:'Ajustes' }[name] || '';
   if (name==='dashboard') loadDashboard();
   if (name==='historial') { currentPage=1; loadHistorial(); }
   if (name==='ajustes')   loadAjustes();
@@ -1976,7 +1976,7 @@ function renderDashboard(data) {
 
   const tbody = document.getElementById('dash-table-body');
   if (!audits.length) {
-    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="e-icon">📋</div><div class="e-text">No hay auditorías registradas aún.<br>Crea la primera desde <b>Nueva Evaluación</b>.</div></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="e-icon">📋</div><div class="e-text">No hay auditorías registradas aún.<br>Crea la primera desde <b>Evaluación de Cocina</b>.</div></div></td></tr>`;
     return;
   }
   tbody.innerHTML = audits.map(a => {
