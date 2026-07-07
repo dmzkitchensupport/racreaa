@@ -422,24 +422,28 @@ body { background:var(--bg); font-family:'Morl',sans-serif; color:var(--text); f
 .crit-name { font-size:14px; letter-spacing: 1px; color: var(--text3); text-transform: uppercase; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; }
 /* ── RATING SEGMENTADO 1-5 ── */
 /* ══ ECT — Escala de Cumplimiento Técnico 1-10 ══ */
-.seg-rating { display: flex; border-radius: 3px; overflow: hidden; border: 1px solid rgba(255,255,255,.1); }
-.seg-btn-r {
-  flex: 1; padding: 8px 0; text-align: center;
-  font-size: 12px; font-weight: 600; cursor: pointer;
-  transition: background .12s, color .12s; color: rgba(250,250,247,.45);
-  background: rgba(255,255,255,.04);
-  border-right: 1px solid rgba(255,255,255,.08);
-  -webkit-user-select: none; user-select: none;
-  touch-action: manipulation; letter-spacing: .5px;
+.seg-rating {
+  display: flex; gap: 6px; border-radius: 0; border: none; background: none;
 }
-.seg-btn-r:last-child { border-right: none; }
-.seg-btn-r:hover { color: rgba(250,250,247,.75); background: rgba(255,255,255,.08); }
-.seg-btn-r:active { opacity: .65; }
-.seg-btn-r.v1.sel { background:rgba(184,50,50,.7); color:rgba(255,255,255,.9); }
-.seg-btn-r.v2.sel { background:rgba(192,96,32,.7); color:rgba(255,255,255,.9); }
-.seg-btn-r.v3.sel { background:rgba(160,120,32,.7); color:rgba(255,255,255,.9); }
-.seg-btn-r.v4.sel { background:rgba(46,125,82,.7);  color:rgba(255,255,255,.9); }
-.seg-btn-r.v5.sel { background:rgba(27,94,56,.75);  color:rgba(255,255,255,.95); }
+.seg-btn-r {
+  flex: 1; padding: 10px 4px 8px; text-align: center;
+  border-radius: 4px; cursor: pointer;
+  transition: background .15s, color .15s, transform .1s;
+  color: rgba(250,250,247,.35);
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.08);
+  -webkit-user-select: none; user-select: none;
+  touch-action: manipulation;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+.seg-btn-r:active { transform: scale(.95); }
+.seg-btn-num { font-size: 18px; font-weight: 900; line-height: 1; font-family: 'Morl', sans-serif; }
+.seg-btn-lbl { font-size: 8px; letter-spacing: .5px; text-transform: uppercase; line-height: 1.2; }
+.seg-btn-r.v1.sel { background:rgba(184,50,50,.25);  border-color:#B83232; color:#E57373; }
+.seg-btn-r.v2.sel { background:rgba(192,96,32,.25);  border-color:#C06020; color:#FF8A50; }
+.seg-btn-r.v3.sel { background:rgba(160,120,32,.25); border-color:#A07820; color:#FFD54F; }
+.seg-btn-r.v4.sel { background:rgba(46,125,82,.25);  border-color:#2E7D52; color:#66BB6A; }
+.seg-btn-r.v5.sel { background:rgba(27,94,56,.30);   border-color:#1B5E38; color:#A5D6A7; }
 /* ECT label debajo del rating */
 .ect-descriptor {
   font-size:9px; letter-spacing:1.5px; text-transform:uppercase;
@@ -1636,7 +1640,9 @@ function addCardM() {
         <span id="cs-${id}-${c.key}" style="font-family:'Morl',sans-serif;font-weight:700;font-size:15px;color:var(--text3)">—</span>
       </div>
       <div class="seg-rating">
-        ${[1,2,3,4,5].map(i=>`<div class="seg-btn-r v${i}" onclick="setStarM('${id}','${c.key}',${i})">${i}</div>`).join('')}
+        ${[
+  [1,'Deficiente'],[2,'Mal'],[3,'Corregir'],[4,'Mejorar'],[5,'Estándar']
+].map(([i,l])=>`<div class="seg-btn-r v${i}" onclick="setStarM('${id}','${c.key}',${i})"><span class="seg-btn-num">${i}</span><span class="seg-btn-lbl">${l}</span></div>`).join('')}
       </div>
       <div class="ect-descriptor" id="ect-${id}-${c.key}"></div>
     </div>`).join('');
@@ -1724,11 +1730,11 @@ function stampPlatilloEnd(id) {
 }
 
 function getECTDesc(val) {
-  if (val <= 2)  return { label:'Crítico',     cls:'ect-critico' };
-  if (val <= 4)  return { label:'Deficiente',  cls:'ect-deficiente' };
-  if (val <= 6)  return { label:'Estándar',    cls:'ect-estandar' };
-  if (val <= 8)  return { label:'Bueno',       cls:'ect-bueno' };
-  return              { label:'Excelencia',  cls:'ect-excelencia' };
+  if (val === 1) return { label:'Deficiente', cls:'ect-critico' };
+  if (val === 2) return { label:'Mal',        cls:'ect-deficiente' };
+  if (val === 3) return { label:'Corregir',   cls:'ect-estandar' };
+  if (val === 4) return { label:'Mejorar',    cls:'ect-bueno' };
+  return               { label:'Estándar',   cls:'ect-excelencia' };
 }
 
 function setStarM(id, crit, val) {
@@ -2259,7 +2265,9 @@ function buildSalonCriterios() {
         ${c.subs.map(s=>`
           <div class="crit-block" data-sub="${s.k}">
             <div class="crit-name"><span>${s.l}</span><span id="smss-${c.id}-${s.k}" style="font-family:'Morl',sans-serif;font-weight:700;font-size:15px;color:var(--text3)">—</span></div>
-            <div class="seg-rating">${[1,2,3,4,5].map(i=>`<div class="seg-btn-r v${i}" onclick="setSalonStarM('${c.id}','${s.k}',${i})">${i}</div>`).join('')}</div>
+            <div class="seg-rating">${[
+  [1,'Deficiente'],[2,'Mal'],[3,'Corregir'],[4,'Mejorar'],[5,'Estándar']
+].map(([i,l])=>`<div class="seg-btn-r v${i}" onclick="setSalonStarM('${c.id}','${s.k}',${i})"><span class="seg-btn-num">${i}</span><span class="seg-btn-lbl">${l}</span></div>`).join('')}</div>
           </div>`).join('')}
         <div class="pc-score-row">
           <span class="pc-score-label">Score criterio</span>
