@@ -422,24 +422,24 @@ body { background:var(--bg); font-family:'Morl',sans-serif; color:var(--text); f
 .crit-name { font-size:14px; letter-spacing: 1px; color: var(--text3); text-transform: uppercase; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; }
 /* ── RATING SEGMENTADO 1-5 ── */
 /* ══ ECT — Escala de Cumplimiento Técnico 1-10 ══ */
-.seg-rating { display: flex; border-radius: 3px; overflow: hidden; border: 1px solid rgba(255,255,255,.2); }
+.seg-rating { display: flex; border-radius: 3px; overflow: hidden; border: 1px solid rgba(255,255,255,.1); }
 .seg-btn-r {
-  flex: 1; padding: 11px 0; text-align: center;
-  font-size: 14px; font-weight: 800; cursor: pointer;
-  transition: background .12s, color .12s; color: rgba(250,250,247,.85);
-  background: rgba(255,255,255,.08);
-  border-right: 1px solid rgba(255,255,255,.12);
+  flex: 1; padding: 8px 0; text-align: center;
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  transition: background .12s, color .12s; color: rgba(250,250,247,.45);
+  background: rgba(255,255,255,.04);
+  border-right: 1px solid rgba(255,255,255,.08);
   -webkit-user-select: none; user-select: none;
   touch-action: manipulation; letter-spacing: .5px;
 }
 .seg-btn-r:last-child { border-right: none; }
+.seg-btn-r:hover { color: rgba(250,250,247,.75); background: rgba(255,255,255,.08); }
 .seg-btn-r:active { opacity: .65; }
-/* ECT semáforo: 1-2 Crítico · 3-4 Deficiente · 5-6 Estándar · 7-8 Bueno · 9-10 Excelencia */
-.seg-btn-r.v1.sel,.seg-btn-r.v2.sel  { background:#B83232; color:#fff; }
-.seg-btn-r.v3.sel,.seg-btn-r.v4.sel  { background:#C06020; color:#fff; }
-.seg-btn-r.v5.sel,.seg-btn-r.v6.sel  { background:#A07820; color:#fff; }
-.seg-btn-r.v7.sel,.seg-btn-r.v8.sel  { background:#2E7D52; color:#fff; }
-.seg-btn-r.v9.sel,.seg-btn-r.v10.sel { background:#1B5E38; color:#fff; }
+.seg-btn-r.v1.sel { background:rgba(184,50,50,.7); color:rgba(255,255,255,.9); }
+.seg-btn-r.v2.sel { background:rgba(192,96,32,.7); color:rgba(255,255,255,.9); }
+.seg-btn-r.v3.sel { background:rgba(160,120,32,.7); color:rgba(255,255,255,.9); }
+.seg-btn-r.v4.sel { background:rgba(46,125,82,.7);  color:rgba(255,255,255,.9); }
+.seg-btn-r.v5.sel { background:rgba(27,94,56,.75);  color:rgba(255,255,255,.95); }
 /* ECT label debajo del rating */
 .ect-descriptor {
   font-size:11px; letter-spacing:2px; text-transform:uppercase;
